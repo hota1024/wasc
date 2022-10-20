@@ -11,18 +11,27 @@ pub enum TokenKind {
     Star,  // *
     Slash, // /
 
+    Eq, // =
+
     OpenParen,  // (
     CloseParen, // )
     OpenBrace,  // {
     CloseBrace, // }
 
-    Int(i64),
+    UnsignedInt(u64),
     Ident(String),
+
+    KeywordLet,    // let
+    KeywordI32,    // i32
+    KeywordI64,    // i64
+    KeywordMut,    // mut
+    KeywordFn,     // fn
+    KeywordReturn, // return
 
     Whitespace,
 
     Unknown,
-    EOF,
+    Eof,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

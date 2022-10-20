@@ -37,6 +37,10 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
             end += 1;
             kind = TokenKind::Slash;
         }
+        b'=' => {
+            end += 1;
+            kind = TokenKind::Eq;
+        }
         b'(' => {
             end += 1;
             kind = TokenKind::OpenParen;
@@ -58,14 +62,14 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
                 end += 1;
             }
 
-            kind = TokenKind::Int(
+            kind = TokenKind::UnsignedInt(
                 std::str::from_utf8(&input[start..end])
                     .unwrap()
                     .parse()
                     .unwrap(),
             );
         }
-        b'a'..=b'z' => {
+        b'a'..=b'z' | b'A'..=b'Z' => {
             end += 1;
             while end < input.len()
                 && (b"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
@@ -74,7 +78,17 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
                 end += 1;
             }
 
-            kind = TokenKind::Ident(String::from_utf8(input[start..end].to_vec()).unwrap());
+            let literal = String::from_utf8(input[start..end].to_vec()).unwrap();
+
+            match literal.as_str() {
+                "let" => kind = TokenKind::KeywordLet,
+                "i64" => kind = TokenKind::KeywordI64,
+                "i32" => kind = TokenKind::KeywordI32,
+                "mut" => kind = TokenKind::KeywordMut,
+                "fn" => kind = TokenKind::KeywordFn,
+                "return" => kind = TokenKind::KeywordReturn,
+                _ => kind = TokenKind::Ident(literal),
+            }
         }
         b' ' | b'\n' | b'\t' => {
             end += 1;
@@ -100,14 +114,13 @@ pub fn lex(input: &str) -> Vec<Token> {
                 pos = p;
             }
             None => {
-                println!("invalid char {:?}", &input[pos]);
                 pos += 1;
             }
         }
     }
 
     tokens.push(Token::new(
-        TokenKind::EOF,
+        TokenKind::Eof,
         "".to_string(),
         Span::new(pos, pos),
     ));
@@ -139,33 +152,33 @@ fn test_lex() {
             Token::new(TokenKind::CloseParen, ")".to_string(), Span::new(7, 8)),
             Token::new(TokenKind::OpenBrace, "{".to_string(), Span::new(8, 9)),
             Token::new(TokenKind::CloseBrace, "}".to_string(), Span::new(9, 10)),
-            Token::new(TokenKind::EOF, "".to_string(), Span::new(10, 10)),
+            Token::new(TokenKind::Eof, "".to_string(), Span::new(10, 10)),
         ]
     );
     assert_eq!(
         lex("1234567890"),
         vec![
             Token::new(
-                TokenKind::Int(1234567890),
+                TokenKind::UnsignedInt(1234567890),
                 "1234567890".to_string(),
                 Span::new(0, 10)
             ),
-            Token::new(TokenKind::EOF, "".to_string(), Span::new(10, 10)),
+            Token::new(TokenKind::Eof, "".to_string(), Span::new(10, 10)),
         ]
     );
     assert_eq!(
         lex("1 + 2 * 3"),
         vec![
-            Token::new(TokenKind::Int(1), "1".to_string(), Span::new(0, 1)),
+            Token::new(TokenKind::UnsignedInt(1), "1".to_string(), Span::new(0, 1)),
             Token::new(TokenKind::Whitespace, " ".to_string(), Span::new(1, 2)),
             Token::new(TokenKind::Plus, "+".to_string(), Span::new(2, 3)),
             Token::new(TokenKind::Whitespace, " ".to_string(), Span::new(3, 4)),
-            Token::new(TokenKind::Int(2), "2".to_string(), Span::new(4, 5)),
+            Token::new(TokenKind::UnsignedInt(2), "2".to_string(), Span::new(4, 5)),
             Token::new(TokenKind::Whitespace, " ".to_string(), Span::new(5, 6)),
             Token::new(TokenKind::Star, "*".to_string(), Span::new(6, 7)),
             Token::new(TokenKind::Whitespace, " ".to_string(), Span::new(7, 8)),
-            Token::new(TokenKind::Int(3), "3".to_string(), Span::new(8, 9)),
-            Token::new(TokenKind::EOF, "".to_string(), Span::new(9, 9)),
+            Token::new(TokenKind::UnsignedInt(3), "3".to_string(), Span::new(8, 9)),
+            Token::new(TokenKind::Eof, "".to_string(), Span::new(9, 9)),
         ]
     );
 }
@@ -179,12 +192,12 @@ fn test_remove_whitespaces() {
     assert_eq!(
         tokens,
         vec![
-            Token::new(TokenKind::Int(1), "1".to_string(), Span::new(0, 1)),
+            Token::new(TokenKind::UnsignedInt(1), "1".to_string(), Span::new(0, 1)),
             Token::new(TokenKind::Plus, "+".to_string(), Span::new(2, 3)),
-            Token::new(TokenKind::Int(2), "2".to_string(), Span::new(4, 5)),
+            Token::new(TokenKind::UnsignedInt(2), "2".to_string(), Span::new(4, 5)),
             Token::new(TokenKind::Star, "*".to_string(), Span::new(6, 7)),
-            Token::new(TokenKind::Int(3), "3".to_string(), Span::new(8, 9)),
-            Token::new(TokenKind::EOF, "".to_string(), Span::new(9, 9)),
+            Token::new(TokenKind::UnsignedInt(3), "3".to_string(), Span::new(8, 9)),
+            Token::new(TokenKind::Eof, "".to_string(), Span::new(9, 9)),
         ]
     );
 }
