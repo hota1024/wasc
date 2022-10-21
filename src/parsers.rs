@@ -195,8 +195,17 @@ fn test_parse() {
     let mut walker = TokenWalker::new(tokens);
     let ast = parse_expr(&mut walker).unwrap();
 
-    assert_eq!(ast, 
-        Ast::expr_bin(BinOp::Mul, Ast::expr_bin(BinOp::Add, Ast::new(AstKind::LitUnsignedInt(1), Span::new(1, 2)), Ast::new(AstKind::LitUnsignedInt(2), Span::new(5, 6))), Ast::new(AstKind::LitUnsignedInt(3), Span::new(10, 11)))
+    assert_eq!(
+        ast,
+        Ast::expr_bin(
+            BinOp::Mul,
+            Ast::expr_bin(
+                BinOp::Add,
+                Ast::new(AstKind::LitUnsignedInt(1), Span::new(1, 2)),
+                Ast::new(AstKind::LitUnsignedInt(2), Span::new(5, 6))
+            ),
+            Ast::new(AstKind::LitUnsignedInt(3), Span::new(10, 11))
+        )
     )
 
     // assert_eq!(
