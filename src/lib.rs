@@ -16,24 +16,12 @@ mod span;
 mod token_walker;
 mod tokens;
 
-// fn main() {
-//     let input = "fn main(): i32 {1 + 2 * 3;}";
-//     let tokens = remove_whitespace_tokens(lex(input));
-//     let mut walker = TokenWalker::new(tokens);
-//     let ast = parse(&mut walker).unwrap();
-//     let expr = ast_to_sexpr::ast_to_sexpr(&ast).unwrap();
-//     let code = Expr::encode(&expr);
-
-//     println!("input  > {:?}", input);
-//     println!("output < {:?}", code);
-// }
-
 #[wasm_bindgen]
-pub fn compile(input: &str) -> &str {
+pub fn compile(input: &str) -> String {
     let tokens = remove_whitespace_tokens(lex(input));
     let mut walker = TokenWalker::new(tokens);
     let ast = parse(&mut walker).unwrap();
     let expr = ast_to_sexpr::ast_to_sexpr(&ast).unwrap();
 
-    return &Expr::encode(&expr);
+    return Expr::encode(&expr);
 }

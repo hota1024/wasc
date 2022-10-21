@@ -10,3 +10,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pretty_assertions = "1"
+wasm-bindgen = "0.2.78"
