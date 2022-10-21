@@ -178,17 +178,26 @@ pub fn parse_atom(walker: &mut TokenWalker) -> ParseResult {
 
     if let TokenKind::UnsignedInt(_) = token.kind {
         Ast::lit_from_token(token)
+    } else if let TokenKind::OpenParen = token.kind {
+        let expr = parse_expr(walker)?;
+        walker.expect_next_token(TokenKind::CloseParen)?;
+        Ok(expr)
     } else {
         Err(ParseErr::unexpected_token(token.clone(), "int".to_string()))
     }
 }
 
 #[test]
-fn test_parse_item_let() {
+fn test_parse() {
     use pretty_assertions::assert_eq;
 
-    let tokens = remove_whitespace_tokens(lex("let x: i64 = 64;"));
+    let tokens = remove_whitespace_tokens(lex("(1 + 2) * 3"));
     let mut walker = TokenWalker::new(tokens);
+    let ast = parse_expr(&mut walker).unwrap();
+
+    assert_eq!(ast, 
+        Ast::expr_bin(BinOp::Mul, Ast::expr_bin(BinOp::Add, Ast::new(AstKind::LitUnsignedInt(1), Span::new(1, 2)), Ast::new(AstKind::LitUnsignedInt(2), Span::new(5, 6))), Ast::new(AstKind::LitUnsignedInt(3), Span::new(10, 11)))
+    )
 
     // assert_eq!(
     //     parse_program(&mut walker).unwrap(),
