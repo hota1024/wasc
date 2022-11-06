@@ -27,6 +27,7 @@ pub enum TokenKind {
     KeywordMut,    // mut
     KeywordFn,     // fn
     KeywordReturn, // return
+    KeywordExport, // export
 
     Whitespace,
 

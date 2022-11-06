@@ -65,13 +65,35 @@ fn compile(ast: &Ast) -> AstToSexprResult {
             let global = Expr::list(body);
             Ok(global)
         }
-        AstKind::ItemFn { name, ret_ty, body } => {
+        AstKind::ItemFn {
+            exported,
+            name,
+            params,
+            ret_ty,
+            body,
+        } => {
             let mut func = Vec::new();
             func.push(Expr::symbol("func".to_string()));
-            func.push(Expr::list(vec![
-                Expr::symbol("export".to_string()),
-                ident_to_string(name)?,
-            ]));
+            if *exported {
+                func.push(Expr::list(vec![
+                    Expr::symbol("export".to_string()),
+                    ident_to_string(name)?,
+                ]));
+            }
+
+            for param in params {
+                if let AstKind::FnParam { name, ty } = &param.kind {
+                    func.push(Expr::list(vec![
+                        Expr::symbol("param".to_string()),
+                        compile(&name)?,
+                        compile(&ty)?,
+                    ]))
+                } else {
+                    panic!("given ast is not a param");
+                    todo!("fix this error with Err()!");
+                }
+            }
+
             func.push(Expr::list(vec![
                 Expr::symbol("result".to_string()),
                 compile(ret_ty)?,
@@ -79,10 +101,18 @@ fn compile(ast: &Ast) -> AstToSexprResult {
 
             let mut func = Expr::list(func);
 
-            if let AstKind::Block { stmts } = &body.kind {
+            if let AstKind::Block { stmts, last_expr } = &body.kind {
                 for stmt in stmts {
                     let expr = compile(stmt)?;
                     func.list_append(expr);
+                }
+
+                if let Some(last_expr) = last_expr {
+                    let expr = compile(last_expr)?;
+                    func.list_append(Expr::list_items(vec![
+                        expr,
+                        Expr::symbol("return".to_string()),
+                    ]));
                 }
             } else {
                 Err(AstToSexprErr::unexpected_ast_kind(
@@ -94,6 +124,12 @@ fn compile(ast: &Ast) -> AstToSexprResult {
             Ok(func)
         }
         AstKind::StmtSemi { expr } => compile(expr),
+        AstKind::StmtReturn { expr } => {
+            let mut body = Vec::new();
+            body.push(compile(expr)?);
+            body.push(Expr::symbol("return".to_string()));
+            Ok(Expr::list_items(body))
+        }
         AstKind::ExprBin { op, left, right } => {
             let mut body = Vec::new();
 

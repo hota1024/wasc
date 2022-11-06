@@ -30,6 +30,14 @@ impl TokenWalker {
         self.tokens.get((self.pos + 1) as usize).unwrap()
     }
 
+    pub fn get_pos(&self) -> i64 {
+        self.pos
+    }
+
+    pub fn set_pos(&mut self, pos: i64) {
+        self.pos = pos;
+    }
+
     pub fn expect_next_token(&mut self, kind: TokenKind) -> Result<&Token, ParseErr> {
         let token = self.next();
 

@@ -25,11 +25,17 @@ pub fn parse_program(walker: &mut TokenWalker) -> ParseResult {
 }
 
 pub fn parse_item(walker: &mut TokenWalker) -> ParseResult {
+    let export_token = if walker.peek().kind == TokenKind::KeywordExport {
+        Some(walker.next().clone())
+    } else {
+        None
+    };
+
     let peek = walker.peek();
 
     match peek.kind {
         TokenKind::KeywordLet => parse_item_let(walker),
-        TokenKind::KeywordFn => parse_item_fn(walker),
+        TokenKind::KeywordFn => parse_item_fn(walker, export_token),
         _ => Err(ParseErr::unexpected_token(peek.clone(), format!("global"))),
     }
 }
@@ -61,34 +67,90 @@ pub fn parse_item_let(walker: &mut TokenWalker) -> ParseResult {
     ))
 }
 
-pub fn parse_item_fn(walker: &mut TokenWalker) -> ParseResult {
+pub fn parse_item_fn(walker: &mut TokenWalker, export_token: Option<Token>) -> ParseResult {
     walker.expect_next_token(TokenKind::KeywordFn)?;
     let fn_token = walker.current().clone();
     let ident_token = walker.next();
     let name = Ast::ident_from_token(ident_token)?;
     walker.expect_next_token(TokenKind::OpenParen)?;
+
+    let mut params = Vec::new();
+
+    loop {
+        let peek = walker.peek();
+
+        match peek.kind {
+            TokenKind::CloseParen => break,
+            _ => {
+                let param = parse_fn_param(walker)?;
+                params.push(param);
+            }
+        }
+    }
+
     walker.expect_next_token(TokenKind::CloseParen)?;
     walker.expect_next_token(TokenKind::Colon)?;
     let ret_type = parse_ty(walker)?;
     let block = parse_block(walker)?;
+    let (start_token, exported) = if let Some(token) = export_token {
+        (token, true)
+    } else {
+        (fn_token, false)
+    };
 
-    Ok(Ast::item_fn(&fn_token, name, ret_type, block))
+    Ok(Ast::item_fn(
+        &start_token,
+        exported,
+        name,
+        params,
+        ret_type,
+        block,
+    ))
+}
+
+fn parse_fn_param(walker: &mut TokenWalker) -> ParseResult {
+    let name = parse_ident(walker)?;
+    walker.expect_next_token(TokenKind::Colon);
+    let ty = parse_ty(walker)?;
+
+    Ok(Ast::fn_param(name, ty))
 }
 
 pub fn parse_block(walker: &mut TokenWalker) -> ParseResult {
     walker.expect_next_token(TokenKind::OpenBrace)?;
     let open_token = walker.current().clone();
     let mut stmts = Vec::new();
+    let mut last_expr = None;
 
     while walker.peek().kind != TokenKind::CloseBrace {
-        let item = parse_stmt(walker)?;
+        let before_stmt_pos = walker.get_pos();
+        let result = parse_stmt(walker);
 
-        stmts.push(item);
+        if let Ok(stmt) = result {
+            stmts.push(stmt);
+        } else if let Err(err) = result {
+            if matches!(
+                err,
+                ParseErr::UnexpectedToken {
+                    token: Token {
+                        kind: TokenKind::CloseBrace,
+                        ..
+                    },
+                    ..
+                }
+            ) {
+                walker.set_pos(before_stmt_pos);
+                last_expr = Some(Box::new(parse_expr(walker)?));
+                break;
+            } else {
+                return Err(err);
+            }
+        }
     }
 
     let close_token = walker.expect_next_token(TokenKind::CloseBrace)?;
 
-    Ok(Ast::block(&open_token, stmts, &close_token))
+    Ok(Ast::block(&open_token, stmts, last_expr, &close_token))
 }
 
 pub fn parse_stmt(walker: &mut TokenWalker) -> ParseResult {
@@ -185,6 +247,13 @@ pub fn parse_atom(walker: &mut TokenWalker) -> ParseResult {
     } else {
         Err(ParseErr::unexpected_token(token.clone(), "int".to_string()))
     }
+}
+
+fn parse_ident(walker: &mut TokenWalker) -> ParseResult {
+    let ident_token = walker.next();
+    let name = Ast::ident_from_token(ident_token)?;
+
+    return Ok(name);
 }
 
 #[test]

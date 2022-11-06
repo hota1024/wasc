@@ -87,6 +87,7 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
                 "mut" => kind = TokenKind::KeywordMut,
                 "fn" => kind = TokenKind::KeywordFn,
                 "return" => kind = TokenKind::KeywordReturn,
+                "export" => kind = TokenKind::KeywordExport,
                 _ => kind = TokenKind::Ident(literal),
             }
         }

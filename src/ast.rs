@@ -33,12 +33,19 @@ pub enum AstKind {
         init: Box<Ast>,
     },
     ItemFn {
+        exported: bool,
         name: Box<Ast>,
+        params: Vec<Ast>,
         ret_ty: Box<Ast>,
         body: Box<Ast>,
     },
+    FnParam {
+        name: Box<Ast>,
+        ty: Box<Ast>,
+    },
     Block {
         stmts: Vec<Ast>,
+        last_expr: Option<Box<Ast>>,
     },
     StmtSemi {
         expr: Box<Ast>,
@@ -102,12 +109,21 @@ impl Ast {
         )
     }
 
-    pub fn item_fn(fn_token: &Token, name: Ast, ret_type: Ast, block: Ast) -> Self {
-        let span = fn_token.span.merge(&block.span);
+    pub fn item_fn(
+        start_token: &Token,
+        exported: bool,
+        name: Ast,
+        params: Vec<Ast>,
+        ret_type: Ast,
+        block: Ast,
+    ) -> Self {
+        let span = start_token.span.merge(&block.span);
 
         Self::new(
             AstKind::ItemFn {
+                exported,
                 name: Box::new(name),
+                params,
                 ret_ty: Box::new(ret_type),
                 body: Box::new(block),
             },
@@ -115,10 +131,27 @@ impl Ast {
         )
     }
 
-    pub fn block(open_token: &Token, stmts: Vec<Ast>, close_token: &Token) -> Self {
+    pub fn fn_param(name: Ast, ty: Ast) -> Self {
+        let span = name.span.merge(&ty.span);
+
+        Self::new(
+            AstKind::FnParam {
+                name: Box::new(name),
+                ty: Box::new(ty),
+            },
+            span,
+        )
+    }
+
+    pub fn block(
+        open_token: &Token,
+        stmts: Vec<Ast>,
+        last_expr: Option<Box<Ast>>,
+        close_token: &Token,
+    ) -> Self {
         let span = open_token.span.merge(&close_token.span);
 
-        Self::new(AstKind::Block { stmts }, span)
+        Self::new(AstKind::Block { stmts, last_expr }, span)
     }
 
     pub fn stmt_semi(expr: Ast, semi_token: &Token) -> Self {
