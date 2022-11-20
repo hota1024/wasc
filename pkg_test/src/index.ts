@@ -30,12 +30,3 @@ expectMain(
   'export fn main(): i32 { 2 }',
   2
 )
-
-testInstance(
-  `params test`,
-  'export fn add(a: i32, b: i32): i32 { return 1; }',
-  (i) => {
-    console.log(i.exports)
-    return failed('nyarn')
-  }
-)

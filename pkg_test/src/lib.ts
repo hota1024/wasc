@@ -13,6 +13,7 @@ const getInstance = (source: string): Promise<WebAssembly.Instance> => {
       WebAssembly.instantiate(bin)
         .then((i) => i.instance)
         .then(resolve)
+        .catch(reject)
     })
   })
 }
@@ -59,12 +60,6 @@ export const expectMain = async (
         )}`
       )
     )
-    // console.log(`${bgRed(' FAILED ')} ${bold(label)}`)
-    // console.log(
-    //   `└─────── expected: ${blue(JSON.stringify(expected))}, got: ${red(
-    //     JSON.stringify(result)
-    //   )}`
-    // )
   }
 }
 

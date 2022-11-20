@@ -110,7 +110,7 @@ pub fn parse_item_fn(walker: &mut TokenWalker, export_token: Option<Token>) -> P
 
 fn parse_fn_param(walker: &mut TokenWalker) -> ParseResult {
     let name = parse_ident(walker)?;
-    walker.expect_next_token(TokenKind::Colon);
+    walker.expect_next_token(TokenKind::Colon).unwrap();
     let ty = parse_ty(walker)?;
 
     Ok(Ast::fn_param(name, ty))
