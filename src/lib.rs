@@ -1,3 +1,7 @@
+mod lexer;
+mod span;
+mod tokens;
+
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
