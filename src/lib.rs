@@ -9,7 +9,3 @@ use wasm_bindgen::prelude::*;
 pub fn compile(input: &str) -> String {
     input.to_string()
 }
-
-pub fn hello() -> String {
-    "Hello, world!".to_string()
-}
