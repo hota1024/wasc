@@ -1,7 +1,8 @@
-mod ast;
-mod lexer;
-mod span;
-mod tokens;
+pub mod ast;
+pub mod lexer;
+pub mod parser;
+pub mod span;
+pub mod tokens;
 
 use wasm_bindgen::prelude::*;
 
