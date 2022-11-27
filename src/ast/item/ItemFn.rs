@@ -11,6 +11,6 @@ pub struct ItemFn {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FnParam {
-    name: LitIdent,
-    ty: Ty,
+    pub name: LitIdent,
+    pub ty: Ty,
 }
