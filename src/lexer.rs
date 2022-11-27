@@ -84,6 +84,8 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
                 "let" => kind = TokenKind::KeywordLet,
                 "i64" => kind = TokenKind::KeywordI64,
                 "i32" => kind = TokenKind::KeywordI32,
+                "f64" => kind = TokenKind::KeywordF64,
+                "f32" => kind = TokenKind::KeywordF32,
                 "mut" => kind = TokenKind::KeywordMut,
                 "fn" => kind = TokenKind::KeywordFn,
                 "return" => kind = TokenKind::KeywordReturn,

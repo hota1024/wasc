@@ -24,6 +24,8 @@ pub enum TokenKind {
     KeywordLet,    // let
     KeywordI32,    // i32
     KeywordI64,    // i64
+    KeywordF32,    // f32
+    KeywordF64,    // f64
     KeywordMut,    // mut
     KeywordFn,     // fn
     KeywordReturn, // return
