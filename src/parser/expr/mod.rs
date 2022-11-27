@@ -1,5 +1,6 @@
 pub mod add;
 pub mod atom;
+pub mod block;
 pub mod mul;
 pub mod parse_binary;
 pub mod unary;

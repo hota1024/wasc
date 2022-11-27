@@ -4,6 +4,6 @@ use super::Expr;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ExprBlock {
-    stmts: Vec<Stmt>,
-    last_expr: Option<Box<Expr>>,
+    pub stmts: Vec<Stmt>,
+    pub last_expr: Option<Box<Expr>>,
 }
