@@ -1,0 +1,14 @@
+use super::Expr;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum UnaryOp {
+    Plus,
+    Minus,
+    // TODO: Add more operators
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ExprUnary {
+    pub op: UnaryOp,
+    pub expr: Box<Expr>,
+}
