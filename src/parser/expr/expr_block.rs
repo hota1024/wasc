@@ -41,10 +41,11 @@ pub fn parse_block(walker: &mut TokenWalker) -> ParseResult<ExprBlock> {
         } else {
             walker.set_pos(pos);
             last_expr = Some(Box::new(parse_expr(walker)?));
-            walker.expect_next_token(TokenKind::CloseBrace)?;
             break;
         }
     }
+
+    walker.expect_next_token(TokenKind::CloseBrace)?;
 
     Ok(ExprBlock { stmts, last_expr })
 }
