@@ -7,7 +7,7 @@ use crate::{
     tokens::TokenKind,
 };
 
-pub fn parse_atom(walker: &mut TokenWalker) -> ParseResult<Expr> {
+pub fn parse_expr_atom(walker: &mut TokenWalker) -> ParseResult<Expr> {
     let next = walker.next();
 
     match next.kind {

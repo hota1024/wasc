@@ -1,10 +1,10 @@
 use crate::{
-    ast::stmt::{Stmt, StmtReturn::StmtReturn},
+    ast::stmt::{stmt_return::StmtReturn, Stmt},
     parser::{expr::parse_expr, parser_result::ParseResult, token_walker::TokenWalker},
     tokens::TokenKind,
 };
 
-pub fn parse_return(walker: &mut TokenWalker) -> ParseResult<Stmt> {
+pub fn parse_stmt_return(walker: &mut TokenWalker) -> ParseResult<Stmt> {
     walker.expect_next_token(TokenKind::KeywordReturn)?;
 
     if walker.peek().kind == TokenKind::Semi {

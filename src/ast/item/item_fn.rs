@@ -1,4 +1,4 @@
-use crate::ast::{expr::ExprBlock::ExprBlock, lit::LitIdent::LitIdent, ty::Ty};
+use crate::ast::{expr::expr_block::ExprBlock, lit::lit_ident::LitIdent, ty::Ty};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ItemFn {

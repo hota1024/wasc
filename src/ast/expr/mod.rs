@@ -1,13 +1,13 @@
 use super::lit::Lit;
 
-pub mod ExprBinary;
-pub mod ExprBlock;
-pub mod ExprUnary;
+pub mod expr_binary;
+pub mod expr_block;
+pub mod expr_unary;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Expr {
-    ExprBinary(ExprBinary::ExprBinary),
-    ExprUnary(ExprUnary::ExprUnary),
-    ExprBlock(ExprBlock::ExprBlock),
+    ExprBinary(expr_binary::ExprBinary),
+    ExprUnary(expr_unary::ExprUnary),
+    ExprBlock(expr_block::ExprBlock),
     Lit(Lit),
 }

@@ -1,6 +1,6 @@
-pub mod ItemFn;
+pub mod item_fn;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Item {
-    ItemFn(ItemFn::ItemFn),
+    ItemFn(item_fn::ItemFn),
 }

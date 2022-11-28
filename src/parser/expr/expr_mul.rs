@@ -1,5 +1,5 @@
 use crate::{
-    ast::expr::{Expr, ExprBinary::BinaryOp},
+    ast::expr::{expr_binary::BinaryOp, Expr},
     parser::{
         parser_result::{ParseErr, ParseResult},
         token_walker::TokenWalker,
@@ -7,20 +7,20 @@ use crate::{
     tokens::TokenKind,
 };
 
-use super::{mul::parse_mul, parse_binary::parse_binary_expr};
+use super::{expr_unary::parse_expr_unary, parse_binary::parse_binary_expr};
 
-pub fn parse_add(walker: &mut TokenWalker) -> ParseResult<Expr> {
-    parse_binary_expr(walker, parse_mul, |walker| {
+pub fn parse_expr_mul(walker: &mut TokenWalker) -> ParseResult<Expr> {
+    parse_binary_expr(walker, parse_expr_unary, |walker| {
         let peek = walker.peek();
 
         match peek.kind {
-            TokenKind::Plus => {
+            TokenKind::Star => {
                 walker.next();
-                Ok(BinaryOp::Add)
+                Ok(BinaryOp::Mul)
             }
-            TokenKind::Minus => {
+            TokenKind::Slash => {
                 walker.next();
-                Ok(BinaryOp::Sub)
+                Ok(BinaryOp::Div)
             }
             _ => Err(ParseErr::UnexpectedToken {
                 token: peek.clone(),

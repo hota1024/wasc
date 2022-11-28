@@ -1,8 +1,8 @@
-pub mod StmtReturn;
-pub mod StmtSemi;
+pub mod stmt_return;
+pub mod stmt_semi;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Stmt {
-    StmtSemi(StmtSemi::StmtSemi),
-    StmtReturn(StmtReturn::StmtReturn),
+    StmtSemi(stmt_semi::StmtSemi),
+    StmtReturn(stmt_return::StmtReturn),
 }

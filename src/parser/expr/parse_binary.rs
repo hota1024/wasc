@@ -1,7 +1,7 @@
 use crate::{
     ast::expr::{
+        expr_binary::{BinaryOp, ExprBinary},
         Expr,
-        ExprBinary::{BinaryOp, ExprBinary},
     },
     parser::{
         parser_result::{ParseErr, ParseResult},

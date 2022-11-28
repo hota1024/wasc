@@ -1,5 +1,5 @@
 use crate::{
-    ast::expr::{Expr, ExprBlock::ExprBlock},
+    ast::expr::{expr_block::ExprBlock, Expr},
     parser::{parser_result::ParseResult, stmt::parse_stmt, token_walker::TokenWalker},
     tokens::TokenKind,
 };

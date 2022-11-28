@@ -1,19 +1,19 @@
 use crate::{
     ast::{
         item::{
+            item_fn::{FnParam, ItemFn},
             Item,
-            ItemFn::{FnParam, ItemFn},
         },
-        lit::LitIdent::LitIdent,
+        lit::lit_ident::LitIdent,
     },
     parser::{
-        expr::block::parse_block, parser_result::ParseResult, token_walker::TokenWalker,
+        expr::expr_block::parse_block, parser_result::ParseResult, token_walker::TokenWalker,
         ty::parse_ty,
     },
     tokens::TokenKind,
 };
 
-pub fn parse_fn(walker: &mut TokenWalker, exported: bool) -> ParseResult<Item> {
+pub fn parse_item_fn(walker: &mut TokenWalker, exported: bool) -> ParseResult<Item> {
     walker.expect_next_token(TokenKind::KeywordFn)?;
     let name = LitIdent::from_token(walker.next())?;
     let params = parse_fn_params(walker)?;
