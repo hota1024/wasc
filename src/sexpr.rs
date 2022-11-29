@@ -56,14 +56,20 @@ impl Expr {
         }
     }
 
-    pub fn encode(expr: &Self) -> String {
+    pub fn encode(&self) -> String {
         let mut code = String::new();
 
-        match &expr.kind {
+        match &self.kind {
             ExprKind::List(exprs) => {
                 let mut items = Vec::new();
                 for expr in exprs {
-                    items.push(Self::encode(expr));
+                    if let ExprKind::ListItems(exprs) = &expr.kind {
+                        if exprs.len() == 0 {
+                            continue;
+                        }
+                    }
+
+                    items.push(expr.encode());
                 }
                 code.push('(');
                 code.push_str(items.join(" ").as_str());
@@ -72,7 +78,7 @@ impl Expr {
             ExprKind::ListItems(exprs) => {
                 let mut items = Vec::new();
                 for expr in exprs {
-                    items.push(Self::encode(expr));
+                    items.push(expr.encode());
                 }
                 code.push_str(items.join(" ").as_str());
             }
@@ -95,3 +101,52 @@ impl Expr {
         return code;
     }
 }
+
+macro_rules! s_list {
+    ($expr:expr) => {
+        $crate::sexpr::Expr::list($expr)
+    };
+    ($($expr:expr),*) => {
+        $crate::sexpr::Expr::list(vec![$($expr),*])
+    };
+
+}
+
+macro_rules! s_list_items {
+    ($expr:expr) => {
+        $crate::sexpr::Expr::list_items($expr)
+    };
+    ($($expr:expr),*) => {
+        $crate::sexpr::Expr::list_items(vec![$($expr),*])
+    };
+}
+
+macro_rules! s_symbol {
+    ($name:tt) => {
+        $crate::sexpr::Expr::symbol($name.to_string())
+    };
+    ($name:expr) => {
+        $crate::sexpr::Expr::symbol($name)
+    };
+}
+
+macro_rules! s_string {
+    ($value:expr) => {
+        $crate::sexpr::Expr::string($value.to_string())
+    };
+}
+
+macro_rules! s_int {
+    ($value:expr) => {
+        $crate::sexpr::Expr::int($value)
+    };
+}
+
+macro_rules! s_float {
+    ($value:expr) => {
+        $crate::sexpr::Expr::float($value)
+    };
+    () => {};
+}
+
+pub(crate) use {s_float, s_int, s_list, s_list_items, s_string, s_symbol};
