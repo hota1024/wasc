@@ -20,6 +20,10 @@ impl TokenWalker {
         self.tokens.get((self.pos + 1) as usize).unwrap()
     }
 
+    pub fn peek_over(&self, n: i64) -> &Token {
+        self.tokens.get((self.pos + n) as usize).unwrap()
+    }
+
     pub fn next(&mut self) -> &Token {
         self.pos += 1;
         let token = self.tokens.get(self.pos as usize).unwrap();

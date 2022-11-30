@@ -7,6 +7,7 @@ use crate::{
         expr::{
             expr_binary::{BinaryOp, ExprBinary},
             expr_block::ExprBlock,
+            expr_call::ExprCall,
             Expr,
         },
         item::{item_fn::ItemFn, Item},
@@ -22,12 +23,14 @@ use self::scope::Scope;
 
 pub struct Compiler {
     scope: Scope,
+    last_ret_ty: Ty,
 }
 
 impl Compiler {
     pub fn new() -> Self {
         Self {
             scope: Scope::new(),
+            last_ret_ty: Ty::Void,
         }
     }
 
@@ -49,6 +52,18 @@ impl Compiler {
     }
 
     fn compile_item_fn(&mut self, item_fn: ItemFn) -> sexpr::Expr {
+        let mut param_types = vec![];
+        for param in &item_fn.params {
+            param_types.push(param.ty.clone())
+        }
+        self.scope.add(
+            item_fn.name.ident.clone(),
+            Ty::Fn {
+                params: param_types,
+                ret: Box::new(item_fn.ret_ty.clone()),
+            },
+        );
+
         self.scope.begin();
         let mut items = vec![];
 
@@ -81,7 +96,16 @@ impl Compiler {
         }
 
         if let Some(last_expr) = item_fn.body.last_expr {
+            self.last_ret_ty = self.get_type_expr(&last_expr);
+
             items.push(self.compile_expr(&last_expr));
+        }
+
+        if self.last_ret_ty != item_fn.ret_ty {
+            panic!(
+                "expected return type {:?}, got {:?}",
+                item_fn.ret_ty, self.last_ret_ty
+            );
         }
 
         self.scope.end();
@@ -113,7 +137,10 @@ impl Compiler {
         let mut items = vec![s_symbol!("return")];
 
         if let Some(expr) = &stmt_return.expr {
+            self.last_ret_ty = self.get_type_expr(expr);
             items.push(self.compile_expr(expr));
+        } else {
+            self.last_ret_ty = Ty::Void
         }
 
         s_list!(items)
@@ -123,6 +150,7 @@ impl Compiler {
         match expr {
             Expr::Lit(lit) => self.compile_expr_lit(lit),
             Expr::ExprBinary(expr_binary) => self.compile_expr_binary(expr_binary),
+            Expr::ExprCall(expr_call) => self.compile_expr_call(expr_call),
             _ => panic!("unimplemented"),
         }
     }
@@ -164,12 +192,65 @@ impl Compiler {
         ])
     }
 
+    fn compile_expr_call(&mut self, expr_call: &ExprCall) -> sexpr::Expr {
+        let name = self.compile_ident(&expr_call.fn_name);
+        let name_string = expr_call.fn_name.ident.clone().clone();
+        let scope_entity = self.scope.get_with_ref(&name_string);
+        if let Some(entity) = scope_entity {
+            if let Ty::Fn { params, .. } = &entity.ty {
+                let mut items = vec![];
+
+                items.push(s_symbol!("call"));
+                items.push(name);
+
+                let params_len = params.len();
+
+                if params_len != expr_call.args.len() {
+                    panic!(
+                        "[fn {}{}]: expected {} args, got {}",
+                        expr_call.fn_name.ident,
+                        ty_string(&entity.ty),
+                        params_len,
+                        expr_call.args.len()
+                    );
+                }
+
+                for i in 0..params_len {
+                    let param = &params[i];
+                    let arg = &expr_call.args[i];
+                    let arg_ty = self.get_type_expr(arg);
+
+                    if param != &arg_ty {
+                        panic!(
+                            "[fn {}{}]: expected arg {} to be {:?}, got {:?}",
+                            expr_call.fn_name.ident,
+                            ty_string(&entity.ty),
+                            i,
+                            param,
+                            arg_ty
+                        );
+                    }
+                }
+
+                for arg in &expr_call.args {
+                    items.push(self.compile_expr(arg));
+                }
+
+                return s_list!(items);
+            } else {
+                panic!("expected function type")
+            }
+        }
+        panic!("{} is not defined", expr_call.fn_name.ident);
+    }
+
     fn compile_ty(&mut self, ty: &Ty) -> sexpr::Expr {
         match ty {
             Ty::TyInt64 => s_symbol!("i64"),
             Ty::TyInt32 => s_symbol!("i32"),
             Ty::TyFloat64 => s_symbol!("f64"),
             Ty::TyFloat32 => s_symbol!("f32"),
+            _ => panic!("unimplemented"),
         }
     }
 
@@ -181,32 +262,44 @@ impl Compiler {
         s_string!(format!("{}", ident.ident))
     }
 
-    fn get_type_expr(&mut self, expr: &Expr) -> Ty {
+    fn get_type_expr(&self, expr: &Expr) -> Ty {
         match expr {
             Expr::Lit(lit) => self.get_type_lit(lit),
             Expr::ExprBinary(expr_binary) => self.get_type_expr_binary(expr_binary),
+            Expr::ExprCall(expr_call) => self.get_type_expr_call(expr_call),
             _ => panic!("unimplemented"),
         }
     }
 
-    fn get_type_lit(&mut self, lit: &Lit) -> Ty {
+    fn get_type_lit(&self, lit: &Lit) -> Ty {
         match lit {
             Lit::LitUnsignedInt(_) => Ty::TyInt32,
             Lit::LitIdent(lit_ident) => {
                 let name = &lit_ident.ident;
                 let entity = self.scope.get(name.to_string()).unwrap();
 
-                entity.ty
+                entity.ty.clone()
             }
         }
     }
 
-    fn get_type_expr_binary(&mut self, expr_binary: &ExprBinary) -> Ty {
+    fn get_type_expr_binary(&self, expr_binary: &ExprBinary) -> Ty {
         match expr_binary.op {
             BinaryOp::Add => self.get_type_expr(&expr_binary.left),
             BinaryOp::Sub => self.get_type_expr(&expr_binary.left),
             BinaryOp::Mul => self.get_type_expr(&expr_binary.left),
             BinaryOp::Div => self.get_type_expr(&expr_binary.left),
+        }
+    }
+
+    fn get_type_expr_call(&self, expr_call: &ExprCall) -> Ty {
+        let name = &expr_call.fn_name.ident;
+        let entity = self.scope.get(name.to_string()).unwrap();
+
+        if let Ty::Fn { ret, .. } = &entity.ty {
+            *ret.clone()
+        } else {
+            panic!("{} is not a function", name);
         }
     }
 }
@@ -226,5 +319,23 @@ fn ty_instruction(ty: &Ty, instruction: &str) -> sexpr::Expr {
         Ty::TyInt32 => s_symbol!(format!("i32.{}", instruction)),
         Ty::TyFloat64 => s_symbol!(format!("f64.{}", instruction)),
         Ty::TyFloat32 => s_symbol!(format!("f32.{}", instruction)),
+        _ => panic!("unimplemented"),
+    }
+}
+
+fn ty_string(ty: &Ty) -> String {
+    match &ty {
+        Ty::TyInt64 => "i64".to_string(),
+        Ty::TyInt32 => "i32".to_string(),
+        Ty::TyFloat64 => "f64".to_string(),
+        Ty::TyFloat32 => "f32".to_string(),
+        Ty::Void => "void".to_string(),
+        Ty::Fn { params, ret } => {
+            format!(
+                "({}): {}",
+                params.iter().map(ty_string).collect::<Vec<_>>().join(", "),
+                ty_string(ret)
+            )
+        }
     }
 }

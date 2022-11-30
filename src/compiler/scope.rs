@@ -39,6 +39,10 @@ impl Scope {
     pub fn get(&self, name: String) -> Option<&Entity> {
         self.entities.iter().rev().find(|e| e.name == name)
     }
+
+    pub fn get_with_ref(&self, name: &String) -> Option<&Entity> {
+        self.entities.iter().rev().find(|e| e.name == *name)
+    }
 }
 
 #[test]
