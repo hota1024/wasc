@@ -80,6 +80,10 @@ impl Compiler {
             items.push(stmt);
         }
 
+        if let Some(last_expr) = item_fn.body.last_expr {
+            items.push(self.compile_expr(&last_expr));
+        }
+
         self.scope.end();
         s_list!(items)
     }
