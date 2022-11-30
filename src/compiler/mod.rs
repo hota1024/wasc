@@ -5,7 +5,7 @@ use crate::{
         module::Module,
         ty::Ty,
     },
-    sexpr::{self, s_list, s_list_items, s_string, s_symbol},
+    sexpr::{self, s_list, s_string, s_symbol},
 };
 
 pub struct Compiler {}
@@ -17,12 +17,13 @@ impl Compiler {
 
     pub fn compile_module(self: &Self, module: Module) -> sexpr::Expr {
         let mut items = vec![];
+        items.push(s_symbol!("module"));
 
         for item in module.items {
             items.push(self.compile_item(item));
         }
 
-        s_list!(s_symbol!("module"), s_list_items!(items))
+        s_list!(items)
     }
 
     fn compile_item(self: &Self, item: Item) -> sexpr::Expr {
@@ -44,17 +45,17 @@ impl Compiler {
             ));
         }
 
-        let mut params = vec![];
+        // let mut params = vec![];
 
         for param in item_fn.params {
-            params.push(s_list!(vec![
+            items.push(s_list!(vec![
                 s_symbol!("param"),
                 self.compile_ident(param.name),
                 self.compile_ty(param.ty),
             ]))
         }
 
-        items.push(s_list_items!(params));
+        // items.push(s_list_items!(params));
 
         items.push(s_list!(vec![
             s_symbol!("result"),

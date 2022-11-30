@@ -9,6 +9,7 @@ pub mod tokens;
 use compiler::Compiler;
 use lexer::{lex, remove_whitespace_tokens};
 use parser::{module::parse_module, token_walker::TokenWalker};
+use sexpr::encoder::Encoder;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -18,6 +19,9 @@ pub fn compile(input: &str) -> String {
     let module = parse_module(&mut walker).unwrap();
 
     let compiler = Compiler::new();
+    let sexpr = compiler.compile_module(module);
 
-    compiler.compile_module(module).encode()
+    let encoder = Encoder::default();
+
+    encoder.encode(&sexpr)
 }
