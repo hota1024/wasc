@@ -12,6 +12,7 @@ pub fn parse_expr_atom(walker: &mut TokenWalker) -> ParseResult<Expr> {
 
     match next.kind {
         TokenKind::UnsignedInt(_) => Ok(Expr::Lit(Lit::from_token(&next).unwrap())),
+        TokenKind::Ident(_) => Ok(Expr::Lit(Lit::from_token(&next).unwrap())),
         _ => Err(ParseErr::UnexpectedToken {
             token: next.clone(),
             expected: vec![TokenKind::UnsignedInt(0)],

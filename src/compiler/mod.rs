@@ -68,6 +68,7 @@ impl Compiler {
                 self.compile_ident(&param.name),
                 self.compile_ty(&param.ty),
             ]));
+            self.scope.add(param.name.ident, param.ty)
         }
 
         items.push(s_list!(vec![
@@ -130,7 +131,9 @@ impl Compiler {
                     s_symbol!(lit_unsigned_int.value.to_string()),
                 ])
             }
-            _ => panic!("unimplemented"),
+            Lit::LitIdent(lit_ident) => {
+                s_list!(vec![s_symbol!("local.get"), self.compile_ident(&lit_ident)])
+            }
         }
     }
 
@@ -185,7 +188,12 @@ impl Compiler {
     fn get_type_lit(&mut self, lit: &Lit) -> Ty {
         match lit {
             Lit::LitUnsignedInt(_) => Ty::TyInt32,
-            _ => panic!("unimplemented"),
+            Lit::LitIdent(lit_ident) => {
+                let name = &lit_ident.ident;
+                let entity = self.scope.get(name.to_string()).unwrap();
+
+                entity.ty
+            }
         }
     }
 
