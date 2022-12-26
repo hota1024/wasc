@@ -5,7 +5,7 @@ pub struct ItemFn {
     pub exported: bool,
     pub name: LitIdent,
     pub params: Vec<FnParam>,
-    pub ret_ty: Ty,
+    pub ret_ty: Option<Ty>,
     pub body: ExprBlock,
 }
 

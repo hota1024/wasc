@@ -53,5 +53,8 @@
     "moduleNameMapper": {
       "^@/(.+)": "<rootDir>/src/$1"
     }
+  },
+  "dependencies": {
+    "wabt": "^1.0.30"
   }
 }

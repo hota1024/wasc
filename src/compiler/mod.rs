@@ -60,9 +60,16 @@ impl Compiler {
             item_fn.name.ident.clone(),
             Ty::Fn {
                 params: param_types,
-                ret: Box::new(item_fn.ret_ty.clone()),
+                ret: match &item_fn.ret_ty {
+                    Some(ty) => Some(Box::new(ty.clone())),
+                    None => None,
+                },
             },
         );
+        //let is_ret_void = match &item_fn.ret_ty {
+        //    Some(ty) => matches!(ty, Ty::Void),
+        //    None => true,
+        //};
 
         self.scope.begin();
         let mut items = vec![];
@@ -86,10 +93,9 @@ impl Compiler {
             self.scope.add(param.name.ident, param.ty)
         }
 
-        items.push(s_list!(vec![
-            s_symbol!("result"),
-            self.compile_ty(&item_fn.ret_ty),
-        ]));
+        if let Some(ty) = &item_fn.ret_ty {
+            items.push(s_list!(vec![s_symbol!("result"), self.compile_ty(&ty),]));
+        }
 
         for stmt in self.compile_expr_block(&item_fn.body) {
             items.push(stmt);
@@ -101,11 +107,17 @@ impl Compiler {
             items.push(self.compile_expr(&last_expr));
         }
 
-        if self.last_ret_ty != item_fn.ret_ty {
-            panic!(
-                "expected return type {:?}, got {:?}",
-                item_fn.ret_ty, self.last_ret_ty
-            );
+        if let Some(ty) = &item_fn.ret_ty {
+            if &self.last_ret_ty != ty {
+                panic!(
+                    "expected return type {:?}, got {:?}",
+                    item_fn.ret_ty, self.last_ret_ty
+                );
+            }
+        } else {
+            if !matches!(&self.last_ret_ty, Ty::Void) {
+                panic!("function must not return");
+            }
         }
 
         self.scope.end();
@@ -130,7 +142,11 @@ impl Compiler {
     }
 
     fn compile_stmt_semi(&mut self, stmt_semi: &StmtSemi) -> sexpr::Expr {
-        self.compile_expr(&stmt_semi.expr)
+        if matches!(self.get_type_expr(&stmt_semi.expr), Ty::Void) {
+            self.compile_expr(&stmt_semi.expr)
+        } else {
+            s_list!(s_symbol!("drop"), self.compile_expr(&stmt_semi.expr))
+        }
     }
 
     fn compile_stmt_return(&mut self, stmt_return: &StmtReturn) -> sexpr::Expr {
@@ -297,7 +313,10 @@ impl Compiler {
         let entity = self.scope.get(name.to_string()).unwrap();
 
         if let Ty::Fn { ret, .. } = &entity.ty {
-            *ret.clone()
+            match &ret {
+                Some(ty) => *ty.clone(),
+                None => Ty::Void,
+            }
         } else {
             panic!("{} is not a function", name);
         }
@@ -334,7 +353,10 @@ fn ty_string(ty: &Ty) -> String {
             format!(
                 "({}): {}",
                 params.iter().map(ty_string).collect::<Vec<_>>().join(", "),
-                ty_string(ret)
+                match ret {
+                    Some(ty) => ty_string(ty),
+                    None => ty_string(&Ty::Void),
+                }
             )
         }
     }

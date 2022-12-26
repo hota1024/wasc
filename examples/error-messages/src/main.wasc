@@ -1,11 +1,8 @@
-fn get_i64(a: i64): i64 {
-  a
+fn add(a: i32, b: i32) {
+  a + b;
 }
 
-fn add(a: i32, b: i32): i32 {
-  a + b
+export fn main() {
+  add(10, 20);
 }
 
-fn main(): i32 {
-  add(get_i64(10), 2) + 3
-}

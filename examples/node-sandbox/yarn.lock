@@ -4936,6 +4936,11 @@ w3c-xmlserializer@^2.0.0:
   dependencies:
     xml-name-validator "^3.0.0"
 
+wabt@^1.0.30:
+  version "1.0.30"
+  resolved "https://registry.yarnpkg.com/wabt/-/wabt-1.0.30.tgz#23cff6d38a05d0718e298fda371a70f0dff38ad7"
+  integrity sha512-qM1QnttJhjZ4vTSuXvder43yxgGhVffT/0wMc0SwYpboEW0/ENISpei/2kIDEMPrnNfTQ4GdvD7JIFV0IJPYog==
+
 walker@^1.0.7, walker@~1.0.5:
   version "1.0.7"
   resolved "https://registry.yarnpkg.com/walker/-/walker-1.0.7.tgz#2f7f9b8fd10d677262b18a884e28d19618e028fb"

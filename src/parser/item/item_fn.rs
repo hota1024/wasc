@@ -18,8 +18,13 @@ pub fn parse_item_fn(walker: &mut TokenWalker, exported: bool) -> ParseResult<It
     let name = LitIdent::from_token(walker.next())?;
     let params = parse_fn_params(walker)?;
 
-    walker.expect_next_token(TokenKind::Colon)?;
-    let ret_ty = parse_ty(walker)?;
+    let ret_ty = if walker.peek().kind == TokenKind::Colon {
+        //walker.expect_next_token(TokenKind::Colon)?;
+        walker.next();
+        Some(parse_ty(walker)?)
+    } else {
+        None
+    };
 
     let body = parse_block(walker)?;
 
