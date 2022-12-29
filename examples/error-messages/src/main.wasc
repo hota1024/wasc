@@ -3,6 +3,8 @@ import js {
 }
 
 export fn _start() {
+  const a = 10;
+  let a = 0;
   print(10);
 }
 

@@ -10,13 +10,17 @@ use crate::{
             expr_call::ExprCall,
             Expr,
         },
-        item::{item_fn::ItemFn, Item},
+        item::{
+            item_fn::ItemFn,
+            item_import::{ImportItemFn, ImportItemKind, ItemImport},
+            Item,
+        },
         lit::{lit_ident::LitIdent, Lit},
         module::Module,
         stmt::{stmt_return::StmtReturn, stmt_semi::StmtSemi, Stmt},
         ty::Ty,
     },
-    sexpr::{self, s_list, s_string, s_symbol},
+    sexpr::{self, s_expand, s_list, s_string, s_symbol},
 };
 
 use self::scope::Scope;
@@ -48,7 +52,63 @@ impl Compiler {
     fn compile_item(&mut self, item: Item) -> sexpr::Expr {
         match item {
             Item::ItemFn(item_fn) => self.compile_item_fn(item_fn),
+            Item::ItemImport(item_import) => self.compile_item_import(item_import),
         }
+    }
+
+    fn compile_item_import(&mut self, import_fn: ItemImport) -> sexpr::Expr {
+        let mut imports = vec![];
+
+        for item in import_fn.items {
+            let mut import = vec![];
+
+            import.push(s_symbol!("import"));
+            import.push(self.compile_ident_string(&import_fn.mod_name));
+
+            match item.kind {
+                ImportItemKind::Fn(ImportItemFn {
+                    name,
+                    params,
+                    ret_ty,
+                }) => {
+                    let mut param_types = vec![];
+                    for param in &params {
+                        param_types.push(param.ty.clone())
+                    }
+                    self.scope.add(
+                        name.ident.clone(),
+                        Ty::Fn {
+                            params: param_types,
+                            ret: match &ret_ty {
+                                Some(ty) => Some(Box::new(ty.clone())),
+                                None => None,
+                            },
+                        },
+                    );
+
+                    import.push(self.compile_ident_string(&name));
+                    let mut decl = vec![];
+
+                    decl.push(s_symbol!("func"));
+                    decl.push(self.compile_ident(&name));
+
+                    for param in params {
+                        decl.push(s_list![s_symbol!("param"), self.compile_ty(&param.ty)]);
+                    }
+
+                    if matches!(ret_ty, Some(_)) {
+                        panic!("cannot specify return type in import function")
+                    }
+
+                    import.push(s_list!(decl));
+                }
+                _ => panic!("unsupported import item"),
+            }
+
+            imports.push(s_list!(import));
+        }
+
+        s_expand!(imports)
     }
 
     fn compile_item_fn(&mut self, item_fn: ItemFn) -> sexpr::Expr {

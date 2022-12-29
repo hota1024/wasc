@@ -30,6 +30,7 @@ pub enum TokenKind {
     KeywordFn,     // fn
     KeywordReturn, // return
     KeywordExport, // export
+    KeywordImport, // import
 
     Whitespace,
 

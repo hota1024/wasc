@@ -8,11 +8,15 @@ use crate::{
     tokens::TokenKind,
 };
 
+use self::item_import::parse_item_import;
+
 pub mod item_fn;
+pub mod item_import;
 
 pub fn parse_item(walker: &mut TokenWalker) -> ParseResult<Item> {
     match walker.peek().kind {
         TokenKind::KeywordFn => parse_item_fn(walker, false),
+        TokenKind::KeywordImport => parse_item_import(walker),
         TokenKind::KeywordExport => {
             walker.next();
             match walker.peek().kind {

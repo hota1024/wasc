@@ -45,7 +45,10 @@ impl Encoder {
 
         match &expr.kind {
             ExprKind::List(ref exprs) => {
-                if exprs.iter().any(|e| matches!(e.kind, ExprKind::List(_))) {
+                if exprs
+                    .iter()
+                    .any(|e| matches!(e.kind, ExprKind::List(_) | ExprKind::Expand(_)))
+                {
                     let first = exprs.first().unwrap();
                     let (_, rest) = exprs.split_first().unwrap();
 
@@ -74,6 +77,14 @@ impl Encoder {
                     )
                 }
             }
+            ExprKind::Expand(ref exprs) => format!(
+                "{}",
+                exprs
+                    .iter()
+                    .map(|e| self.encode_expr(&e, level, false))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            ),
             ExprKind::Symbol(value) => format!("{}{}", indent, value),
             ExprKind::String(value) => format!("{}\"{}\"", indent, value),
             ExprKind::Int(value) => format!("{}{}", indent, value),

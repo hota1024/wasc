@@ -3,6 +3,7 @@ pub mod encoder;
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExprKind {
     List(Vec<Expr>),
+    Expand(Vec<Expr>),
     Symbol(String),
     String(String),
     Int(i64),
@@ -21,6 +22,10 @@ impl Expr {
 
     pub fn list(exprs: Vec<Expr>) -> Self {
         Self::new(ExprKind::List(exprs))
+    }
+
+    pub fn expand(exprs: Vec<Expr>) -> Self {
+        Self::new(ExprKind::Expand(exprs))
     }
 
     pub fn symbol(name: String) -> Self {
@@ -47,7 +52,15 @@ macro_rules! s_list {
     ($($expr:expr),*) => {
         $crate::sexpr::Expr::list(vec![$($expr),*])
     };
+}
 
+macro_rules! s_expand {
+    ($expr:expr) => {
+        $crate::sexpr::Expr::expand($expr)
+    };
+    ($($expr:expr),*) => {
+        $crate::sexpr::Expr::expand(vec![$($expr),*])
+    };
 }
 
 macro_rules! s_symbol {
@@ -78,4 +91,4 @@ macro_rules! s_float {
     () => {};
 }
 
-pub(crate) use {s_float, s_int, s_list, s_string, s_symbol};
+pub(crate) use {s_expand, s_float, s_int, s_list, s_string, s_symbol};

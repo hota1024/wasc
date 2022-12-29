@@ -69,7 +69,7 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
                     .unwrap(),
             );
         }
-        b'a'..=b'z' | b'A'..=b'Z' => {
+        b'_' | b'a'..=b'z' | b'A'..=b'Z' => {
             end += 1;
             while end < input.len()
                 && (b"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
@@ -90,6 +90,7 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
                 "fn" => kind = TokenKind::KeywordFn,
                 "return" => kind = TokenKind::KeywordReturn,
                 "export" => kind = TokenKind::KeywordExport,
+                "import" => kind = TokenKind::KeywordImport,
                 _ => kind = TokenKind::Ident(literal),
             }
         }
