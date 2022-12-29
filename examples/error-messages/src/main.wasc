@@ -2,7 +2,7 @@ import js {
   fn print(i32);
 }
 
-export fn main() {
+export fn _start() {
   print(10);
 }
 
