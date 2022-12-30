@@ -1,10 +1,9 @@
 import js {
-  fn print(i32);
+  fn print(f32);
 }
 
 export fn _start() {
-  const a = 10;
-  let a = 0;
-  print(10);
+  let a: f32 = 0;
+  print(a);
 }
 

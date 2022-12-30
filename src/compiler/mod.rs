@@ -17,7 +17,7 @@ use crate::{
         },
         lit::{lit_ident::LitIdent, Lit},
         module::Module,
-        stmt::{stmt_return::StmtReturn, stmt_semi::StmtSemi, Stmt},
+        stmt::{stmt_let::StmtLet, stmt_return::StmtReturn, stmt_semi::StmtSemi, Stmt},
         ty::Ty,
     },
     sexpr::{self, s_expand, s_list, s_string, s_symbol},
@@ -28,6 +28,7 @@ use self::scope::Scope;
 pub struct Compiler {
     scope: Scope,
     last_ret_ty: Ty,
+    expect_lit_ty: Option<Ty>,
 }
 
 impl Compiler {
@@ -35,6 +36,7 @@ impl Compiler {
         Self {
             scope: Scope::new(),
             last_ret_ty: Ty::Void,
+            expect_lit_ty: None,
         }
     }
 
@@ -198,7 +200,47 @@ impl Compiler {
         match &stmt {
             Stmt::StmtSemi(stmt_semi) => self.compile_stmt_semi(stmt_semi),
             Stmt::StmtReturn(stmt_return) => self.compile_stmt_return(stmt_return),
+            Stmt::StmtLet(stmt_let) => self.compile_stmt_let(stmt_let),
         }
+    }
+
+    fn compile_stmt_let(&mut self, stmt_let: &StmtLet) -> sexpr::Expr {
+        let mut decl_items = vec![];
+
+        decl_items.push(s_symbol!("local"));
+        decl_items.push(self.compile_ident(&stmt_let.name));
+
+        self.expect_lit_ty = stmt_let.ty.clone();
+        let initializer_ty = self.get_type_expr(&stmt_let.initializer);
+        self.expect_lit_ty = None;
+
+        let ty = if let Some(ty) = &stmt_let.ty {
+            if &initializer_ty == ty {
+                self.compile_ty(&ty)
+            } else {
+                panic!(
+                    "cannot initialize {} by {}",
+                    stmt_let.name.ident,
+                    ty_string(&initializer_ty)
+                )
+            }
+        } else {
+            self.compile_ty(&initializer_ty)
+        };
+
+        decl_items.push(ty);
+
+        let mut initializer_items = vec![];
+
+        initializer_items.push(s_symbol!("local.set"));
+        initializer_items.push(self.compile_ident(&stmt_let.name));
+
+        self.expect_lit_ty = stmt_let.ty.clone();
+        initializer_items.push(self.compile_expr(&stmt_let.initializer));
+        self.expect_lit_ty = None;
+
+        self.scope.add(stmt_let.name.ident.clone(), initializer_ty);
+        s_expand!(s_list!(decl_items), s_list!(initializer_items))
     }
 
     fn compile_stmt_semi(&mut self, stmt_semi: &StmtSemi) -> sexpr::Expr {
@@ -235,7 +277,17 @@ impl Compiler {
         match lit {
             Lit::LitUnsignedInt(lit_unsigned_int) => {
                 s_list!(vec![
-                    s_symbol!("i32.const"),
+                    if let Some(ty) = &self.expect_lit_ty {
+                        match ty {
+                            Ty::TyInt32 => s_symbol!("i32.const"),
+                            Ty::TyInt64 => s_symbol!("i64.const"),
+                            Ty::TyFloat32 => s_symbol!("f32.const"),
+                            Ty::TyFloat64 => s_symbol!("f64.const"),
+                            _ => panic!("cannot use {} for integer literal", ty_string(&ty)),
+                        }
+                    } else {
+                        s_symbol!("i32.const")
+                    },
                     s_symbol!(lit_unsigned_int.value.to_string()),
                 ])
             }
@@ -349,7 +401,13 @@ impl Compiler {
 
     fn get_type_lit(&self, lit: &Lit) -> Ty {
         match lit {
-            Lit::LitUnsignedInt(_) => Ty::TyInt32,
+            Lit::LitUnsignedInt(_) => {
+                if let Some(ty) = &self.expect_lit_ty {
+                    ty.clone()
+                } else {
+                    Ty::TyInt32
+                }
+            }
             Lit::LitIdent(lit_ident) => {
                 let name = &lit_ident.ident;
                 let entity = self.scope.get(name.to_string()).unwrap();
