@@ -7,9 +7,9 @@ use crate::{
     tokens::TokenKind,
 };
 
-use super::{expr_as::parse_expr_as, expr_atom::parse_expr_atom};
+use super::expr_as::parse_expr_as;
 
-pub fn parse_expr_unary(walker: &mut TokenWalker) -> ParseResult<Expr> {
+pub fn parse_expr_prefix_minus(walker: &mut TokenWalker) -> ParseResult<Expr> {
     let peek = walker.peek();
 
     match peek.kind {

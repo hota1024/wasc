@@ -6,10 +6,11 @@ pub enum TokenKind {
     Colon, // :
     Comma, // ,
 
-    Plus,  // +
-    Minus, // -
-    Star,  // *
-    Slash, // /
+    Plus,        // +
+    Minus,       // -
+    Star,        // *
+    Slash,       // /
+    Exclamation, // !
 
     Eq, // =
 
@@ -27,6 +28,9 @@ pub enum TokenKind {
     KeywordI64,    // i64
     KeywordF32,    // f32
     KeywordF64,    // f64
+    KeywordBool,   // bool
+    KeywordTrue,   // true
+    KeywordFalse,  // false
     KeywordMut,    // mut
     KeywordFn,     // fn
     KeywordAs,     // as

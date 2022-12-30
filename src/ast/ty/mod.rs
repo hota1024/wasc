@@ -4,6 +4,7 @@ pub enum Ty {
     TyInt64,
     TyFloat32,
     TyFloat64,
+    TyBool,
     Fn {
         params: Vec<Ty>,
         ret: Option<Box<Ty>>,

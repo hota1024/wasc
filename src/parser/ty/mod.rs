@@ -13,6 +13,7 @@ pub fn parse_ty(walker: &mut TokenWalker) -> ParseResult<Ty> {
         TokenKind::KeywordI32 => Ok(Ty::TyInt32),
         TokenKind::KeywordF64 => Ok(Ty::TyFloat64),
         TokenKind::KeywordF32 => Ok(Ty::TyFloat32),
+        TokenKind::KeywordBool => Ok(Ty::TyBool),
         _ => Err(ParseErr::UnexpectedToken {
             token: token.clone(),
             expected: vec![
@@ -20,6 +21,7 @@ pub fn parse_ty(walker: &mut TokenWalker) -> ParseResult<Ty> {
                 TokenKind::KeywordI32,
                 TokenKind::KeywordF64,
                 TokenKind::KeywordF32,
+                TokenKind::KeywordBool,
             ],
         }),
     }

@@ -90,6 +90,10 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
             end += 1;
             kind = TokenKind::CloseBrace;
         }
+        b'!' => {
+            end += 1;
+            kind = TokenKind::Exclamation;
+        }
         b'0'..=b'9' => {
             let mut has_float_point = false;
             while end < input.len() && b"0123456789.".contains(&input[end]) {
@@ -135,6 +139,9 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
                 "i32" => kind = TokenKind::KeywordI32,
                 "f64" => kind = TokenKind::KeywordF64,
                 "f32" => kind = TokenKind::KeywordF32,
+                "bool" => kind = TokenKind::KeywordBool,
+                "true" => kind = TokenKind::KeywordTrue,
+                "false" => kind = TokenKind::KeywordFalse,
                 "mut" => kind = TokenKind::KeywordMut,
                 "fn" => kind = TokenKind::KeywordFn,
                 "as" => kind = TokenKind::KeywordAs,

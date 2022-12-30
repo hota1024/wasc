@@ -27,6 +27,10 @@ pub fn parse_expr_atom(walker: &mut TokenWalker) -> ParseResult<Expr> {
                 Ok(Expr::Lit(Lit::from_token(&next).unwrap()))
             }
         }
+        TokenKind::KeywordTrue | TokenKind::KeywordFalse => {
+            let next = walker.next();
+            Ok(Expr::Lit(Lit::from_token(next).unwrap()))
+        }
         _ => Err(ParseErr::UnexpectedToken {
             token: walker.peek().clone(),
             expected: vec![

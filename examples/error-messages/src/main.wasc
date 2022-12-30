@@ -1,12 +1,9 @@
 import js {
-  fn print(f32);
+  fn print(bool);
 }
 
 export fn _start() {
-  // this is comment
-  /*
-  multi
-    line
-      comment
-        */
+  print(!true);
+  print(!false);
+  print(!!true);
 }

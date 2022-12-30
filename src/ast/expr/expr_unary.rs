@@ -4,6 +4,7 @@ use super::Expr;
 pub enum UnaryOp {
     Plus,
     Minus,
+    Not,
     // TODO: Add more operators
 }
 

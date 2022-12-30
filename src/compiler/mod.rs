@@ -9,6 +9,7 @@ use crate::{
             expr_binary::{BinaryOp, ExprBinary},
             expr_block::ExprBlock,
             expr_call::ExprCall,
+            expr_unary::{ExprUnary, UnaryOp},
             Expr,
         },
         item::{
@@ -285,6 +286,7 @@ impl Compiler {
         match expr {
             Expr::Lit(lit) => self.compile_expr_lit(lit),
             Expr::ExprBinary(expr_binary) => self.compile_expr_binary(expr_binary),
+            Expr::ExprUnary(expr_unary) => self.compile_expr_unary(expr_unary),
             Expr::ExprCall(expr_call) => self.compile_expr_call(expr_call),
             Expr::ExprAs(expr_as) => self.compile_expr_as(expr_as),
             _ => panic!("unimplemented"),
@@ -326,6 +328,13 @@ impl Compiler {
             Lit::LitIdent(lit_ident) => {
                 s_list!(vec![s_symbol!("local.get"), self.compile_ident(&lit_ident)])
             }
+            Lit::LitBool(lit_bool) => {
+                if lit_bool.value {
+                    s_list!(s_symbol!("i32.const"), s_symbol!("1"))
+                } else {
+                    s_list!(s_symbol!("i32.const"), s_symbol!("0"))
+                }
+            }
         }
     }
 
@@ -350,6 +359,19 @@ impl Compiler {
             left_expr,
             right_expr,
         ])
+    }
+
+    fn compile_expr_unary(&mut self, expr_unary: &ExprUnary) -> sexpr::Expr {
+        match &expr_unary.op {
+            UnaryOp::Not => {
+                s_list!(
+                    s_symbol!("i32.eq"),
+                    self.compile_expr(&expr_unary.expr),
+                    s_list!(s_symbol!("i32.const"), s_symbol!("0"))
+                )
+            }
+            _ => panic!("unimplemented unary operator `{:?}`", expr_unary.op),
+        }
     }
 
     fn compile_expr_call(&mut self, expr_call: &ExprCall) -> sexpr::Expr {
@@ -479,6 +501,7 @@ impl Compiler {
             Ty::TyInt32 => s_symbol!("i32"),
             Ty::TyFloat64 => s_symbol!("f64"),
             Ty::TyFloat32 => s_symbol!("f32"),
+            Ty::TyBool => s_symbol!("i32"),
             _ => panic!("unimplemented"),
         }
     }
@@ -495,6 +518,7 @@ impl Compiler {
         match expr {
             Expr::Lit(lit) => self.get_type_lit(lit),
             Expr::ExprBinary(expr_binary) => self.get_type_expr_binary(expr_binary),
+            Expr::ExprUnary(expr_unary) => self.get_type_expr_unary(expr_unary),
             Expr::ExprCall(expr_call) => self.get_type_expr_call(expr_call),
             Expr::ExprAs(expr_as) => self.get_type_expr_as(expr_as),
             _ => panic!("unimplemented"),
@@ -527,6 +551,7 @@ impl Compiler {
 
                 entity.ty.clone()
             }
+            Lit::LitBool(_) => Ty::TyBool,
         }
     }
 
@@ -536,6 +561,13 @@ impl Compiler {
             BinaryOp::Sub => self.get_type_expr(&expr_binary.left),
             BinaryOp::Mul => self.get_type_expr(&expr_binary.left),
             BinaryOp::Div => self.get_type_expr(&expr_binary.left),
+        }
+    }
+
+    fn get_type_expr_unary(&self, expr_unary: &ExprUnary) -> Ty {
+        match expr_unary.op {
+            UnaryOp::Not => Ty::TyBool,
+            _ => panic!("unimplemented unary operator `{:?}`", expr_unary.op),
         }
     }
 
@@ -583,6 +615,7 @@ fn ty_string(ty: &Ty) -> String {
         Ty::TyInt32 => "i32".to_string(),
         Ty::TyFloat64 => "f64".to_string(),
         Ty::TyFloat32 => "f32".to_string(),
+        Ty::TyBool => "bool".to_string(),
         Ty::Void => "void".to_string(),
         Ty::Fn { params, ret } => {
             format!(
