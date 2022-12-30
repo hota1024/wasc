@@ -34,6 +34,8 @@ pub enum TokenKind {
     KeywordExport, // export
     KeywordImport, // import
 
+    InlineComment,    // inline comment
+    MultiLineComment, // multi-line comment
     Whitespace,
 
     Unknown,

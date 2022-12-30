@@ -35,7 +35,40 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
         }
         b'/' => {
             end += 1;
-            kind = TokenKind::Slash;
+            if end > input.len() - 1 {
+                kind = TokenKind::Slash;
+            } else {
+                match input[end] {
+                    b'/' => {
+                        end += 1;
+                        kind = TokenKind::InlineComment;
+                        while end < input.len() && input[end] != b'\n' {
+                            end += 1;
+                        }
+                    }
+                    b'*' => {
+                        end += 1;
+                        kind = TokenKind::MultiLineComment;
+                        let mut is_terminated = false;
+                        while end < input.len() {
+                            if input[end] == b'*' && input[end + 1] == b'/' {
+                                is_terminated = true;
+                                break;
+                            }
+                            end += 1;
+                        }
+
+                        if !is_terminated {
+                            panic!("unterminated multi-line comment")
+                        }
+
+                        end += 2;
+                    }
+                    _ => {
+                        kind = TokenKind::Slash;
+                    }
+                }
+            }
         }
         b'=' => {
             end += 1;
@@ -151,7 +184,11 @@ pub fn lex(input: &str) -> Vec<Token> {
 
 pub fn remove_whitespace_tokens(tokens: Vec<Token>) -> Vec<Token> {
     let mut tokens = tokens.clone();
-    tokens.retain(|t| t.kind != TokenKind::Whitespace);
+    tokens.retain(|t| {
+        t.kind != TokenKind::Whitespace
+            && t.kind != TokenKind::InlineComment
+            && t.kind != TokenKind::MultiLineComment
+    });
 
     tokens
 }

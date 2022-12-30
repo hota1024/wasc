@@ -1,11 +1,12 @@
 import js {
-  fn print(i32);
+  fn print(f32);
 }
 
 export fn _start() {
-  let a = 10;
-  print(a);
-  let b = 6;
-  print(a + b);
+  // this is comment
+  /*
+  multi
+    line
+      comment
+        */
 }
-
