@@ -9,7 +9,7 @@ pub enum BinaryOp {
     // TODO: Add more operators
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ExprBinary {
     pub left: Box<Expr>,
     pub right: Box<Expr>,

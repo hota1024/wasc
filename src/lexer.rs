@@ -58,16 +58,32 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
             kind = TokenKind::CloseBrace;
         }
         b'0'..=b'9' => {
-            while end < input.len() && b"0123456789".contains(&input[end]) {
+            let mut has_float_point = false;
+            while end < input.len() && b"0123456789.".contains(&input[end]) {
+                if input[end] == b'.' {
+                    if has_float_point {
+                        panic!("cannot use float point char '.' in twice")
+                    }
+                    has_float_point = true;
+                }
                 end += 1;
             }
 
-            kind = TokenKind::UnsignedInt(
-                std::str::from_utf8(&input[start..end])
-                    .unwrap()
-                    .parse()
-                    .unwrap(),
-            );
+            if has_float_point {
+                kind = TokenKind::UnsignedFloat(
+                    std::str::from_utf8(&input[start..end])
+                        .unwrap()
+                        .parse::<f64>()
+                        .unwrap(),
+                );
+            } else {
+                kind = TokenKind::UnsignedInt(
+                    std::str::from_utf8(&input[start..end])
+                        .unwrap()
+                        .parse()
+                        .unwrap(),
+                );
+            }
         }
         b'_' | b'a'..=b'z' | b'A'..=b'Z' => {
             end += 1;

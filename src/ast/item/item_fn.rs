@@ -1,6 +1,6 @@
 use crate::ast::{expr::expr_block::ExprBlock, lit::lit_ident::LitIdent, ty::Ty};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ItemFn {
     pub exported: bool,
     pub name: LitIdent,

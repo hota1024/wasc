@@ -1,9 +1,8 @@
 import js {
-  fn print(f32);
+  fn print(i32);
 }
 
 export fn _start() {
-  let a: f32 = 0;
-  print(a);
+  print(1.2);
 }
 

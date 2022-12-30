@@ -1,6 +1,6 @@
 use crate::tokens::{Token, TokenKind};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ParseErr {
     UnexpectedToken {
         token: Token,

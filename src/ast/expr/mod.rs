@@ -5,7 +5,7 @@ pub mod expr_block;
 pub mod expr_call;
 pub mod expr_unary;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     ExprBinary(expr_binary::ExprBinary),
     ExprUnary(expr_unary::ExprUnary),

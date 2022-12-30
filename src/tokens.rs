@@ -1,6 +1,6 @@
 use crate::span::Span;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
     Semi,  // ;
     Colon, // :
@@ -19,6 +19,7 @@ pub enum TokenKind {
     CloseBrace, // }
 
     UnsignedInt(u64),
+    UnsignedFloat(f64),
     Ident(String),
 
     KeywordLet,    // let
@@ -38,7 +39,7 @@ pub enum TokenKind {
     Eof,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub kind: TokenKind,
     pub literal: String,

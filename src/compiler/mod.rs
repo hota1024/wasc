@@ -291,6 +291,20 @@ impl Compiler {
                     s_symbol!(lit_unsigned_int.value.to_string()),
                 ])
             }
+            Lit::LitUnsignedFloat(lit_unsigned_int) => {
+                s_list!(vec![
+                    if let Some(ty) = &self.expect_lit_ty {
+                        match ty {
+                            Ty::TyFloat32 => s_symbol!("f32.const"),
+                            Ty::TyFloat64 => s_symbol!("f64.const"),
+                            _ => panic!("cannot use {} for float literal", ty_string(&ty)),
+                        }
+                    } else {
+                        s_symbol!("f32.const")
+                    },
+                    s_symbol!(lit_unsigned_int.value.to_string()),
+                ])
+            }
             Lit::LitIdent(lit_ident) => {
                 s_list!(vec![s_symbol!("local.get"), self.compile_ident(&lit_ident)])
             }
@@ -406,6 +420,13 @@ impl Compiler {
                     ty.clone()
                 } else {
                     Ty::TyInt32
+                }
+            }
+            Lit::LitUnsignedFloat(_) => {
+                if let Some(ty) = &self.expect_lit_ty {
+                    ty.clone()
+                } else {
+                    Ty::TyFloat32
                 }
             }
             Lit::LitIdent(lit_ident) => {

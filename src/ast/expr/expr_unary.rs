@@ -7,7 +7,7 @@ pub enum UnaryOp {
     // TODO: Add more operators
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ExprUnary {
     pub op: UnaryOp,
     pub expr: Box<Expr>,

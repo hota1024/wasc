@@ -15,6 +15,10 @@ pub fn parse_expr_atom(walker: &mut TokenWalker) -> ParseResult<Expr> {
             let next = walker.next();
             Ok(Expr::Lit(Lit::from_token(next).unwrap()))
         }
+        TokenKind::UnsignedFloat(_) => {
+            let next = walker.next();
+            Ok(Expr::Lit(Lit::from_token(next).unwrap()))
+        }
         TokenKind::Ident(_) => {
             if walker.peek_over(2).kind == TokenKind::OpenParen {
                 parse_expr_call(walker)
@@ -25,7 +29,11 @@ pub fn parse_expr_atom(walker: &mut TokenWalker) -> ParseResult<Expr> {
         }
         _ => Err(ParseErr::UnexpectedToken {
             token: walker.peek().clone(),
-            expected: vec![TokenKind::UnsignedInt(0)],
+            expected: vec![
+                TokenKind::UnsignedInt(0),
+                TokenKind::UnsignedFloat(0.0),
+                TokenKind::Ident("".to_string()),
+            ],
         }),
     }
 }
