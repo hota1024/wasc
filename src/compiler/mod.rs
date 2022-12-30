@@ -19,7 +19,7 @@ use crate::{
         lit::{lit_ident::LitIdent, Lit},
         module::Module,
         stmt::{stmt_let::StmtLet, stmt_return::StmtReturn, stmt_semi::StmtSemi, Stmt},
-        ty::Ty,
+        ty::{self, Ty},
     },
     sexpr::{self, s_expand, s_list, s_string, s_symbol},
 };
@@ -129,10 +129,6 @@ impl Compiler {
                 },
             },
         );
-        //let is_ret_void = match &item_fn.ret_ty {
-        //    Some(ty) => matches!(ty, Ty::Void),
-        //    None => true,
-        //};
 
         self.scope.begin();
         let mut items = vec![];
@@ -154,6 +150,10 @@ impl Compiler {
                 self.compile_ty(&param.ty),
             ]));
             self.scope.add(param.name.ident, param.ty)
+        }
+
+        for local in self.compile_let_decl_in_block(&item_fn.body) {
+            items.push(local);
         }
 
         if let Some(ty) = &item_fn.ret_ty {
@@ -187,6 +187,33 @@ impl Compiler {
         s_list!(items)
     }
 
+    fn compile_let_decl_in_block(&mut self, block: &ExprBlock) -> Vec<sexpr::Expr> {
+        let mut locals = vec![];
+
+        for stmt in &block.stmts {
+            match stmt {
+                Stmt::StmtLet(StmtLet {
+                    name,
+                    ty,
+                    initializer,
+                }) => {
+                    let ty = match &ty {
+                        Some(ty) => ty.clone(),
+                        None => self.get_type_expr(&initializer),
+                    };
+                    locals.push(s_list!(
+                        s_symbol!("local"),
+                        self.compile_ident(&name),
+                        self.compile_ty(&ty)
+                    ));
+                }
+                _ => (),
+            }
+        }
+
+        locals
+    }
+
     fn compile_expr_block(&mut self, block: &ExprBlock) -> Vec<sexpr::Expr> {
         let mut items = vec![];
 
@@ -206,30 +233,19 @@ impl Compiler {
     }
 
     fn compile_stmt_let(&mut self, stmt_let: &StmtLet) -> sexpr::Expr {
-        let mut decl_items = vec![];
-
-        decl_items.push(s_symbol!("local"));
-        decl_items.push(self.compile_ident(&stmt_let.name));
-
         self.expect_lit_ty = stmt_let.ty.clone();
         let initializer_ty = self.get_type_expr(&stmt_let.initializer);
         self.expect_lit_ty = None;
 
-        let ty = if let Some(ty) = &stmt_let.ty {
-            if &initializer_ty == ty {
-                self.compile_ty(&ty)
-            } else {
+        if let Some(ty) = &stmt_let.ty {
+            if &initializer_ty != ty {
                 panic!(
                     "cannot initialize {} by {}",
                     stmt_let.name.ident,
                     ty_string(&initializer_ty)
                 )
             }
-        } else {
-            self.compile_ty(&initializer_ty)
-        };
-
-        decl_items.push(ty);
+        }
 
         let mut initializer_items = vec![];
 
@@ -241,7 +257,7 @@ impl Compiler {
         self.expect_lit_ty = None;
 
         self.scope.add(stmt_let.name.ident.clone(), initializer_ty);
-        s_expand!(s_list!(decl_items), s_list!(initializer_items))
+        s_list!(initializer_items)
     }
 
     fn compile_stmt_semi(&mut self, stmt_semi: &StmtSemi) -> sexpr::Expr {
@@ -503,7 +519,11 @@ impl Compiler {
             }
             Lit::LitIdent(lit_ident) => {
                 let name = &lit_ident.ident;
-                let entity = self.scope.get(name.to_string()).unwrap();
+
+                let entity = self
+                    .scope
+                    .get(name.to_string())
+                    .expect(format!("`{}` is not defined", name).as_str());
 
                 entity.ty.clone()
             }
