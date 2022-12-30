@@ -29,6 +29,7 @@ pub enum TokenKind {
     KeywordF64,    // f64
     KeywordMut,    // mut
     KeywordFn,     // fn
+    KeywordAs,     // as
     KeywordReturn, // return
     KeywordExport, // export
     KeywordImport, // import

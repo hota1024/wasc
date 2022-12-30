@@ -1,8 +1,8 @@
 import js {
-  fn print(i32);
+  fn print(f64);
 }
 
 export fn _start() {
-  print(1.2);
+  print(3.14 as i32 as i64 as f64);
 }
 

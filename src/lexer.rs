@@ -104,6 +104,7 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
                 "f32" => kind = TokenKind::KeywordF32,
                 "mut" => kind = TokenKind::KeywordMut,
                 "fn" => kind = TokenKind::KeywordFn,
+                "as" => kind = TokenKind::KeywordAs,
                 "return" => kind = TokenKind::KeywordReturn,
                 "export" => kind = TokenKind::KeywordExport,
                 "import" => kind = TokenKind::KeywordImport,

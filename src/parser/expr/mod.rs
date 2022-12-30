@@ -1,4 +1,5 @@
 pub mod expr_add;
+pub mod expr_as;
 pub mod expr_atom;
 pub mod expr_block;
 pub mod expr_call;

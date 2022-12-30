@@ -5,6 +5,7 @@ use std::fmt::Binary;
 use crate::{
     ast::{
         expr::{
+            expr_as::ExprAs,
             expr_binary::{BinaryOp, ExprBinary},
             expr_block::ExprBlock,
             expr_call::ExprCall,
@@ -269,6 +270,7 @@ impl Compiler {
             Expr::Lit(lit) => self.compile_expr_lit(lit),
             Expr::ExprBinary(expr_binary) => self.compile_expr_binary(expr_binary),
             Expr::ExprCall(expr_call) => self.compile_expr_call(expr_call),
+            Expr::ExprAs(expr_as) => self.compile_expr_as(expr_as),
             _ => panic!("unimplemented"),
         }
     }
@@ -386,6 +388,75 @@ impl Compiler {
         panic!("{} is not defined", expr_call.fn_name.ident);
     }
 
+    fn compile_expr_as(&mut self, expr_as: &ExprAs) -> sexpr::Expr {
+        let expr = self.compile_expr(&expr_as.expr);
+        let expr_ty = self.get_type_expr(&expr_as.expr);
+
+        match expr_ty {
+            Ty::TyInt32 => match expr_as.ty {
+                // i32 to i32
+                Ty::TyInt32 => expr,
+                // i32 to i64
+                Ty::TyInt64 => s_list!(s_symbol!("i64.extend_i32_s"), expr),
+                // i32 to f32
+                Ty::TyFloat32 => s_list!(s_symbol!("f32.convert_i32_s"), expr),
+                // i32 to f64
+                Ty::TyFloat64 => s_list!(s_symbol!("f64.convert_i32_s"), expr),
+                _ => panic!(
+                    "unsportted type casting to {} from {}",
+                    ty_string(&expr_as.ty),
+                    ty_string(&expr_ty)
+                ),
+            },
+            Ty::TyInt64 => match expr_as.ty {
+                // i64 to i32
+                Ty::TyInt32 => s_list!(s_symbol!("i32.wrap_i64"), expr),
+                // i64 to i64
+                Ty::TyInt64 => expr,
+                // i64 to f32
+                Ty::TyFloat32 => s_list!(s_symbol!("f32.convert_i64_s"), expr),
+                // i64 to f64
+                Ty::TyFloat64 => s_list!(s_symbol!("f64.convert_i64_s"), expr),
+                _ => panic!(
+                    "unsportted type casting to {} from {}",
+                    ty_string(&expr_as.ty),
+                    ty_string(&expr_ty)
+                ),
+            },
+            Ty::TyFloat32 => match expr_as.ty {
+                // f32 to i32
+                Ty::TyInt32 => s_list!(s_symbol!("i32.trunc_f32_s"), expr),
+                // f32 to i64
+                Ty::TyInt64 => s_list!(s_symbol!("i64.trunc_f32_s"), expr),
+                // f32 to f32
+                Ty::TyFloat32 => expr,
+                // f32 to f64
+                Ty::TyFloat64 => s_list!(s_symbol!("f64.promote_f32"), expr),
+                _ => panic!(
+                    "unsportted type casting to {} from {}",
+                    ty_string(&expr_as.ty),
+                    ty_string(&expr_ty)
+                ),
+            },
+            Ty::TyFloat64 => match expr_as.ty {
+                // f64 to i32
+                Ty::TyInt32 => s_list!(s_symbol!("i32.trunc_f64_s"), expr),
+                // f64 to i64
+                Ty::TyInt64 => s_list!(s_symbol!("i64.trunc_f64_s"), expr),
+                // f64 to f32
+                Ty::TyFloat32 => s_list!(s_symbol!("f32.demote_f64"), expr),
+                // f64 to f64
+                Ty::TyFloat64 => expr,
+                _ => panic!(
+                    "unsportted type casting to {} from {}",
+                    ty_string(&expr_as.ty),
+                    ty_string(&expr_ty)
+                ),
+            },
+            _ => panic!("unsportted type casting source: {}", ty_string(&expr_ty)),
+        }
+    }
+
     fn compile_ty(&mut self, ty: &Ty) -> sexpr::Expr {
         match ty {
             Ty::TyInt64 => s_symbol!("i64"),
@@ -409,6 +480,7 @@ impl Compiler {
             Expr::Lit(lit) => self.get_type_lit(lit),
             Expr::ExprBinary(expr_binary) => self.get_type_expr_binary(expr_binary),
             Expr::ExprCall(expr_call) => self.get_type_expr_call(expr_call),
+            Expr::ExprAs(expr_as) => self.get_type_expr_as(expr_as),
             _ => panic!("unimplemented"),
         }
     }
@@ -459,6 +531,10 @@ impl Compiler {
         } else {
             panic!("{} is not a function", name);
         }
+    }
+
+    fn get_type_expr_as(&self, expr_as: &ExprAs) -> Ty {
+        expr_as.ty.clone()
     }
 }
 

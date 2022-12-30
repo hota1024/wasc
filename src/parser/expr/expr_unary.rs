@@ -7,7 +7,7 @@ use crate::{
     tokens::TokenKind,
 };
 
-use super::expr_atom::parse_expr_atom;
+use super::{expr_as::parse_expr_as, expr_atom::parse_expr_atom};
 
 pub fn parse_expr_unary(walker: &mut TokenWalker) -> ParseResult<Expr> {
     let peek = walker.peek();
@@ -15,13 +15,13 @@ pub fn parse_expr_unary(walker: &mut TokenWalker) -> ParseResult<Expr> {
     match peek.kind {
         TokenKind::Minus => {
             walker.next();
-            let expr = parse_expr_atom(walker)?;
+            let expr = parse_expr_as(walker)?;
 
             Ok(Expr::ExprUnary(ExprUnary {
                 op: UnaryOp::Minus,
                 expr: Box::new(expr),
             }))
         }
-        _ => parse_expr_atom(walker),
+        _ => parse_expr_as(walker),
     }
 }
