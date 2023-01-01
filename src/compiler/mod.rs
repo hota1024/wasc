@@ -6,7 +6,7 @@ use crate::{
     ast::{
         expr::{
             expr_as::ExprAs,
-            expr_binary::{BinaryOp, ExprBinary},
+            expr_binary::{AssignOp, BinaryOp, ExprBinary},
             expr_block::ExprBlock,
             expr_call::ExprCall,
             expr_unary::{ExprUnary, UnaryOp},
@@ -339,26 +339,89 @@ impl Compiler {
     }
 
     fn compile_expr_binary(&mut self, expr_binary: &ExprBinary) -> sexpr::Expr {
-        let left_expr = self.compile_expr(&expr_binary.left);
-        let left_ty = self.get_type_expr(&expr_binary.left);
+        match &expr_binary.op {
+            BinaryOp::Assign => {
+                if let Expr::Lit(Lit::LitIdent(ident)) = &*expr_binary.left {
+                    let expr = self.compile_expr(&expr_binary.right);
+                    let expr_ty = self.get_type_expr(&expr_binary.right);
+                    let variable = self
+                        .scope
+                        .get(ident.ident.clone())
+                        .expect(format!("undefined variable: `{}`", ident.ident).as_str());
 
-        let right_expr = self.compile_expr(&expr_binary.right);
-        let right_ty = self.get_type_expr(&expr_binary.right);
+                    if variable.ty != expr_ty {
+                        panic!(
+                            "cannnot assign: {}: {} = <{}>",
+                            ident.ident,
+                            ty_string(&variable.ty),
+                            ty_string(&expr_ty)
+                        );
+                    }
 
-        let instruction = get_instruction_binary_op(&expr_binary.op);
+                    s_list!(s_symbol!("local.set"), self.compile_ident(&ident), expr)
+                } else {
+                    panic!("left hand must be identifier in assign expression")
+                }
+            }
+            BinaryOp::AssignOp(op) => {
+                if let Expr::Lit(Lit::LitIdent(ident)) = &*expr_binary.left {
+                    let mut expr = self.compile_expr(&expr_binary.right);
+                    let expr_ty = self.get_type_expr(&expr_binary.right);
+                    let variable = self
+                        .scope
+                        .get(ident.ident.clone())
+                        .expect(format!("undefined variable: `{}`", ident.ident).as_str());
 
-        if left_ty != right_ty {
-            panic!(
-                "unimplemented {:?} {} {:?}",
-                &left_ty, instruction, right_ty
-            );
+                    if variable.ty != expr_ty {
+                        panic!(
+                            "cannnot assign: {}: {} = <{}>",
+                            ident.ident,
+                            ty_string(&variable.ty),
+                            ty_string(&expr_ty)
+                        );
+                    }
+
+                    let instruction = match op {
+                        AssignOp::Add => get_instruction_binary_op(&BinaryOp::Add),
+                        AssignOp::Sub => get_instruction_binary_op(&BinaryOp::Sub),
+                        AssignOp::Mul => get_instruction_binary_op(&BinaryOp::Mul),
+                        AssignOp::Div => get_instruction_binary_op(&BinaryOp::Div),
+                    };
+
+                    expr = s_list!(vec![
+                        ty_instruction(&variable.ty, &instruction),
+                        s_list!(s_symbol!("local.get"), self.compile_ident(ident)),
+                        expr,
+                    ]);
+
+                    s_list!(s_symbol!("local.set"), self.compile_ident(&ident), expr)
+                } else {
+                    panic!("left hand must be identifier in assign expression")
+                }
+            }
+            _ => {
+                let left_expr = self.compile_expr(&expr_binary.left);
+                let left_ty = self.get_type_expr(&expr_binary.left);
+
+                let right_expr = self.compile_expr(&expr_binary.right);
+                let right_ty = self.get_type_expr(&expr_binary.right);
+
+                let instruction = get_instruction_binary_op(&expr_binary.op);
+
+                if left_ty != right_ty {
+                    panic!(
+                        "unimplemented {:?} {} {:?}",
+                        &left_ty, instruction, right_ty
+                    );
+                }
+
+                s_list!(vec![
+                    ty_instruction(&left_ty, &instruction),
+                    left_expr,
+                    right_expr,
+                ])
+            }
         }
-
-        s_list!(vec![
-            ty_instruction(&left_ty, &instruction),
-            left_expr,
-            right_expr,
-        ])
     }
 
     fn compile_expr_unary(&mut self, expr_unary: &ExprUnary) -> sexpr::Expr {
@@ -561,6 +624,7 @@ impl Compiler {
             BinaryOp::Sub => self.get_type_expr(&expr_binary.left),
             BinaryOp::Mul => self.get_type_expr(&expr_binary.left),
             BinaryOp::Div => self.get_type_expr(&expr_binary.left),
+            BinaryOp::Assign | BinaryOp::AssignOp(..) => Ty::Void,
         }
     }
 
@@ -595,7 +659,8 @@ fn get_instruction_binary_op(op: &BinaryOp) -> &str {
         BinaryOp::Add => "add",
         BinaryOp::Sub => "sub",
         BinaryOp::Mul => "mul",
-        BinaryOp::Div => "div",
+        BinaryOp::Div => "div_s",
+        _ => panic!("no instruction for binary operator `{:?}`", op),
     }
 }
 

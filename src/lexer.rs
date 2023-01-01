@@ -20,54 +20,73 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
             end += 1;
             kind = TokenKind::Comma;
         }
-
-        b'+' => {
+        b'+' | b'-' | b'*' | b'/' => {
             end += 1;
-            kind = TokenKind::Plus;
-        }
-        b'-' => {
-            end += 1;
-            kind = TokenKind::Minus;
-        }
-        b'*' => {
-            end += 1;
-            kind = TokenKind::Star;
-        }
-        b'/' => {
-            end += 1;
-            if end > input.len() - 1 {
-                kind = TokenKind::Slash;
-            } else {
-                match input[end] {
-                    b'/' => {
-                        end += 1;
-                        kind = TokenKind::InlineComment;
-                        while end < input.len() && input[end] != b'\n' {
-                            end += 1;
-                        }
-                    }
-                    b'*' => {
-                        end += 1;
-                        kind = TokenKind::MultiLineComment;
-                        let mut is_terminated = false;
-                        while end < input.len() {
-                            if input[end] == b'*' && input[end + 1] == b'/' {
-                                is_terminated = true;
-                                break;
-                            }
-                            end += 1;
-                        }
-
-                        if !is_terminated {
-                            panic!("unterminated multi-line comment")
-                        }
-
-                        end += 2;
-                    }
-                    _ => {
+            let eq = end < input.len() && input[end] == b'=';
+            if eq {
+                end += 1;
+            }
+            match char {
+                b'+' => {
+                    if eq {
+                        kind = TokenKind::PlusEq;
+                    } else {
+                        kind = TokenKind::Plus;
+                    };
+                }
+                b'-' => {
+                    if eq {
+                        kind = TokenKind::MinusEq;
+                    } else {
+                        kind = TokenKind::Minus;
+                    };
+                }
+                b'*' => {
+                    if eq {
+                        kind = TokenKind::StarEq;
+                    } else {
+                        kind = TokenKind::Star;
+                    };
+                }
+                b'/' => {
+                    if eq {
+                        kind = TokenKind::SlashEq;
+                    } else if end > input.len() - 1 {
                         kind = TokenKind::Slash;
+                    } else {
+                        match input[end] {
+                            b'/' => {
+                                end += 1;
+                                kind = TokenKind::InlineComment;
+                                while end < input.len() && input[end] != b'\n' {
+                                    end += 1;
+                                }
+                            }
+                            b'*' => {
+                                end += 1;
+                                kind = TokenKind::MultiLineComment;
+                                let mut is_terminated = false;
+                                while end < input.len() {
+                                    if input[end] == b'*' && input[end + 1] == b'/' {
+                                        is_terminated = true;
+                                        break;
+                                    }
+                                    end += 1;
+                                }
+
+                                if !is_terminated {
+                                    panic!("unterminated multi-line comment")
+                                }
+
+                                end += 2;
+                            }
+                            _ => {
+                                kind = TokenKind::Slash;
+                            }
+                        }
                     }
                 }
+                _ => panic!("unexpected char '{}' in +-*/", char),
             }
         }
         b'=' => {

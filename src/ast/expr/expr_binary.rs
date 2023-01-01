@@ -6,7 +6,17 @@ pub enum BinaryOp {
     Sub,
     Mul,
     Div,
+    Assign,
+    AssignOp(AssignOp),
     // TODO: Add more operators
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum AssignOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
 }
 
 #[derive(Debug, Clone, PartialEq)]

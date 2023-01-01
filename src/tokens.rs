@@ -12,7 +12,11 @@ pub enum TokenKind {
     Slash,       // /
     Exclamation, // !
 
-    Eq, // =
+    Eq,      // =
+    PlusEq,  // +=
+    MinusEq, // -=
+    StarEq,  // *=
+    SlashEq, // /=
 
     OpenParen,  // (
     CloseParen, // )
