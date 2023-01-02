@@ -14,6 +14,8 @@ pub enum BinaryOp {
     Le,
     EqEq,
     NotEq,
+    And,
+    Or,
     // TODO: Add more operators
 }
 

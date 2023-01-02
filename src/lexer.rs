@@ -151,6 +151,24 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
                 kind = TokenKind::Lt;
             }
         }
+        b'&' => {
+            end += 1;
+            if match_char!(b'&') {
+                end += 1;
+                kind = TokenKind::AndAnd;
+            } else {
+                kind = TokenKind::And;
+            }
+        }
+        b'|' => {
+            end += 1;
+            if match_char!(b'|') {
+                end += 1;
+                kind = TokenKind::BarBar;
+            } else {
+                kind = TokenKind::Bar;
+            }
+        }
         b'0'..=b'9' => {
             let mut has_float_point = false;
             while end < input.len() && b"0123456789.".contains(&input[end]) {

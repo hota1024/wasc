@@ -1,4 +1,5 @@
 pub mod expr_add;
+pub mod expr_and;
 pub mod expr_as;
 pub mod expr_assign;
 pub mod expr_atom;
@@ -7,6 +8,7 @@ pub mod expr_call;
 pub mod expr_equality;
 pub mod expr_mul;
 pub mod expr_not;
+pub mod expr_or;
 pub mod expr_prefix_minus;
 pub mod expr_relational;
 pub mod parse_binary;

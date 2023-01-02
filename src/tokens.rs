@@ -11,6 +11,8 @@ pub enum TokenKind {
     Star,        // *
     Slash,       // /
     Exclamation, // !
+    And,         // &
+    Bar,         // |
 
     Eq,      // =
     PlusEq,  // +=
@@ -18,12 +20,14 @@ pub enum TokenKind {
     StarEq,  // *=
     SlashEq, // /=
 
-    EqEq,  // ==
-    NotEq, // !=
-    Lt,    // <
-    Gt,    // >
-    Le,    // <=
-    Ge,    // >=
+    EqEq,   // ==
+    NotEq,  // !=
+    Lt,     // <
+    Gt,     // >
+    Le,     // <=
+    Ge,     // >=
+    AndAnd, // &&
+    BarBar, // ||
 
     OpenParen,  // (
     CloseParen, // )

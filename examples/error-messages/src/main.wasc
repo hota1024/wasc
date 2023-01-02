@@ -3,5 +3,8 @@ import js {
 }
 
 export fn _start() {
-  print(!!!!!(1 == 1));
+  print(true && true);
+  print(true && false);
+  print(true || false);
+  print(false || false);
 }

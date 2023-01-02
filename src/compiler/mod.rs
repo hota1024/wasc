@@ -630,6 +630,8 @@ impl Compiler {
             BinaryOp::Ge => Ty::TyBool,
             BinaryOp::EqEq => Ty::TyBool,
             BinaryOp::NotEq => Ty::TyBool,
+            BinaryOp::And => Ty::TyBool,
+            BinaryOp::Or => Ty::TyBool,
         }
     }
 
@@ -671,6 +673,8 @@ fn get_instruction_binary_op(op: &BinaryOp) -> &str {
         BinaryOp::Ge => "ge_s",
         BinaryOp::EqEq => "eq",
         BinaryOp::NotEq => "ne",
+        BinaryOp::And => "and",
+        BinaryOp::Or => "or",
         _ => panic!("no instruction for binary operator `{:?}`", op),
     }
 }
@@ -681,7 +685,8 @@ fn ty_instruction(ty: &Ty, instruction: &str) -> sexpr::Expr {
         Ty::TyInt32 => s_symbol!(format!("i32.{}", instruction)),
         Ty::TyFloat64 => s_symbol!(format!("f64.{}", instruction)),
         Ty::TyFloat32 => s_symbol!(format!("f32.{}", instruction)),
-        _ => panic!("unimplemented"),
+        Ty::TyBool => s_symbol!(format!("i32.{}", instruction)),
+        _ => panic!("unimplemented type instruction: `{}`", ty_string(&ty)),
     }
 }
 
