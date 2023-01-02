@@ -7,7 +7,7 @@ use crate::{
     tokens::TokenKind,
 };
 
-use super::expr_call::parse_expr_call;
+use super::{expr_call::parse_expr_call, parse_expr};
 
 pub fn parse_expr_atom(walker: &mut TokenWalker) -> ParseResult<Expr> {
     match walker.peek().kind {
@@ -18,6 +18,13 @@ pub fn parse_expr_atom(walker: &mut TokenWalker) -> ParseResult<Expr> {
         TokenKind::UnsignedFloat(_) => {
             let next = walker.next();
             Ok(Expr::Lit(Lit::from_token(next).unwrap()))
+        }
+        TokenKind::OpenParen => {
+            walker.next();
+            let expr = parse_expr(walker)?;
+            walker.expect_next_token(TokenKind::CloseParen)?;
+
+            Ok(expr)
         }
         TokenKind::Ident(_) => {
             if walker.peek_over(2).kind == TokenKind::OpenParen {
