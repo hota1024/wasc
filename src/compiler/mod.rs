@@ -20,7 +20,7 @@ use crate::{
         lit::{lit_ident::LitIdent, Lit},
         module::Module,
         stmt::{stmt_let::StmtLet, stmt_return::StmtReturn, stmt_semi::StmtSemi, Stmt},
-        ty::{self, Ty},
+        ty::Ty,
     },
     sexpr::{self, s_expand, s_list, s_string, s_symbol},
 };
@@ -427,11 +427,10 @@ impl Compiler {
     fn compile_expr_unary(&mut self, expr_unary: &ExprUnary) -> sexpr::Expr {
         match &expr_unary.op {
             UnaryOp::Not => {
-                s_list!(
-                    s_symbol!("i32.eq"),
-                    self.compile_expr(&expr_unary.expr),
-                    s_list!(s_symbol!("i32.const"), s_symbol!("0"))
-                )
+                s_list!(vec![
+                    s_symbol!("i32.eqz"),
+                    self.compile_expr(&expr_unary.expr)
+                ])
             }
             _ => panic!("unimplemented unary operator `{:?}`", expr_unary.op),
         }
