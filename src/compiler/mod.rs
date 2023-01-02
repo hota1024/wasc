@@ -625,6 +625,12 @@ impl Compiler {
             BinaryOp::Mul => self.get_type_expr(&expr_binary.left),
             BinaryOp::Div => self.get_type_expr(&expr_binary.left),
             BinaryOp::Assign | BinaryOp::AssignOp(..) => Ty::Void,
+            BinaryOp::Lt => Ty::TyBool,
+            BinaryOp::Gt => Ty::TyBool,
+            BinaryOp::Le => Ty::TyBool,
+            BinaryOp::Ge => Ty::TyBool,
+            BinaryOp::EqEq => Ty::TyBool,
+            BinaryOp::NotEq => Ty::TyBool,
         }
     }
 
@@ -660,6 +666,12 @@ fn get_instruction_binary_op(op: &BinaryOp) -> &str {
         BinaryOp::Sub => "sub",
         BinaryOp::Mul => "mul",
         BinaryOp::Div => "div_s",
+        BinaryOp::Lt => "lt_s",
+        BinaryOp::Gt => "gt_s",
+        BinaryOp::Le => "le_s",
+        BinaryOp::Ge => "ge_s",
+        BinaryOp::EqEq => "eq",
+        BinaryOp::NotEq => "ne",
         _ => panic!("no instruction for binary operator `{:?}`", op),
     }
 }

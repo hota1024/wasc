@@ -18,6 +18,13 @@ pub enum TokenKind {
     StarEq,  // *=
     SlashEq, // /=
 
+    EqEq,  // ==
+    NotEq, // !=
+    Lt,    // <
+    Gt,    // >
+    Le,    // <=
+    Ge,    // >=
+
     OpenParen,  // (
     CloseParen, // )
     OpenBrace,  // {

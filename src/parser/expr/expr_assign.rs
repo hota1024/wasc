@@ -10,10 +10,10 @@ use crate::{
     tokens::TokenKind,
 };
 
-use super::{expr_add::parse_expr_add, parse_binary::parse_binary_expr};
+use super::{expr_equality::parse_expr_equality, parse_binary::parse_binary_expr};
 
 pub fn parse_expr_assign(walker: &mut TokenWalker) -> ParseResult<Expr> {
-    parse_binary_expr(walker, parse_expr_add, |walker| {
+    parse_binary_expr(walker, parse_expr_equality, |walker| {
         let peek = walker.peek();
 
         match peek.kind {

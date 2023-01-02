@@ -7,6 +7,16 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
     let mut end = pos;
     let kind;
 
+    macro_rules! match_char {
+        ($char:expr) => {
+            if end > input.len() - 1 {
+                false
+            } else {
+                input[end] == $char
+            }
+        };
+    }
+
     match char {
         b';' => {
             end += 1;
@@ -91,7 +101,12 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
         }
         b'=' => {
             end += 1;
-            kind = TokenKind::Eq;
+            if match_char!(b'=') {
+                end += 1;
+                kind = TokenKind::EqEq;
+            } else {
+                kind = TokenKind::Eq;
+            }
         }
         b'(' => {
             end += 1;
@@ -111,7 +126,30 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
         }
         b'!' => {
             end += 1;
-            kind = TokenKind::Exclamation;
+            if match_char!(b'=') {
+                end += 1;
+                kind = TokenKind::NotEq;
+            } else {
+                kind = TokenKind::Exclamation;
+            }
+        }
+        b'>' => {
+            end += 1;
+            if match_char!(b'=') {
+                end += 1;
+                kind = TokenKind::Ge;
+            } else {
+                kind = TokenKind::Gt;
+            }
+        }
+        b'<' => {
+            end += 1;
+            if match_char!(b'=') {
+                end += 1;
+                kind = TokenKind::Le;
+            } else {
+                kind = TokenKind::Lt;
+            }
         }
         b'0'..=b'9' => {
             let mut has_float_point = false;

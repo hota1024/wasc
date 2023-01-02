@@ -8,6 +8,12 @@ pub enum BinaryOp {
     Div,
     Assign,
     AssignOp(AssignOp),
+    Gt,
+    Lt,
+    Ge,
+    Le,
+    EqEq,
+    NotEq,
     // TODO: Add more operators
 }
 
