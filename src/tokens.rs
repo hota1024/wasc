@@ -49,6 +49,8 @@ pub enum TokenKind {
     KeywordMut,    // mut
     KeywordFn,     // fn
     KeywordAs,     // as
+    KeywordIf,     // if
+    KeywordElse,   // else
     KeywordReturn, // return
     KeywordExport, // export
     KeywordImport, // import
