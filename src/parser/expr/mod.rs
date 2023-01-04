@@ -5,6 +5,7 @@ pub mod expr_assign;
 pub mod expr_atom;
 pub mod expr_block;
 pub mod expr_call;
+pub mod expr_controls;
 pub mod expr_equality;
 pub mod expr_mul;
 pub mod expr_not;

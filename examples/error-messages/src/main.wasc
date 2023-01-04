@@ -3,8 +3,7 @@ import js {
 }
 
 export fn _start() {
-  print(true && true);
-  print(true && false);
-  print(true || false);
-  print(false || false);
+  if true {
+    print(1)
+  }
 }

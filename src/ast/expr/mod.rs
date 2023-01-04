@@ -4,6 +4,7 @@ pub mod expr_as;
 pub mod expr_binary;
 pub mod expr_block;
 pub mod expr_call;
+pub mod expr_if;
 pub mod expr_unary;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -13,5 +14,6 @@ pub enum Expr {
     ExprBlock(expr_block::ExprBlock),
     ExprCall(expr_call::ExprCall),
     ExprAs(expr_as::ExprAs),
+    ExprIf(expr_if::ExprIf),
     Lit(Lit),
 }
