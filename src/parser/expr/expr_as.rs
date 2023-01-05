@@ -4,10 +4,10 @@ use crate::{
     tokens::TokenKind,
 };
 
-use super::expr_atom::parse_expr_atom;
+use super::expr_controls::parse_expr_controls;
 
 pub fn parse_expr_as(walker: &mut TokenWalker) -> ParseResult<Expr> {
-    let mut expr = parse_expr_atom(walker)?;
+    let mut expr = parse_expr_controls(walker)?;
 
     loop {
         if walker.peek().kind == TokenKind::KeywordAs {

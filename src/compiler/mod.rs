@@ -1,7 +1,5 @@
 pub mod scope;
 
-use std::fmt::Binary;
-
 use crate::{
     ast::{
         expr::{
@@ -9,6 +7,7 @@ use crate::{
             expr_binary::{AssignOp, BinaryOp, ExprBinary},
             expr_block::ExprBlock,
             expr_call::ExprCall,
+            expr_if::ExprIf,
             expr_unary::{ExprUnary, UnaryOp},
             Expr,
         },
@@ -42,41 +41,78 @@ impl Compiler {
         }
     }
 
+    fn get_global_if_result(&mut self, ty: &Ty) -> String {
+        format!("$__wasc_global_if_result_{}", ty_string(&ty))
+    }
+
     pub fn compile_module(&mut self, module: Module) -> sexpr::Expr {
         let mut items = vec![];
         items.push(s_symbol!("module"));
 
+        let mut last_item = None;
+
         for item in module.items {
-            items.push(self.compile_item(item));
+            if let Some(last_item) = last_item {
+                if let Item::ItemImport(_) = last_item {
+                    // add global_if_result
+                    items.push(s_list!(
+                        s_symbol!("global"),
+                        s_symbol!(self.get_global_if_result(&Ty::TyInt32)),
+                        s_list!(s_symbol!("mut"), s_symbol!("i32")),
+                        s_list!(s_symbol!("i32.const"), s_symbol!("0"))
+                    ));
+                    items.push(s_list!(
+                        s_symbol!("global"),
+                        s_symbol!(self.get_global_if_result(&Ty::TyInt64)),
+                        s_list!(s_symbol!("mut"), s_symbol!("i64")),
+                        s_list!(s_symbol!("i64.const"), s_symbol!("0"))
+                    ));
+                    items.push(s_list!(
+                        s_symbol!("global"),
+                        s_symbol!(self.get_global_if_result(&Ty::TyFloat32)),
+                        s_list!(s_symbol!("mut"), s_symbol!("f32")),
+                        s_list!(s_symbol!("f32.const"), s_symbol!("0"))
+                    ));
+                    items.push(s_list!(
+                        s_symbol!("global"),
+                        s_symbol!(self.get_global_if_result(&Ty::TyFloat64)),
+                        s_list!(s_symbol!("mut"), s_symbol!("f64")),
+                        s_list!(s_symbol!("f64.const"), s_symbol!("0"))
+                    ));
+                }
+            }
+
+            items.push(self.compile_item(&item));
+            last_item = Some(item.clone());
         }
 
         s_list!(items)
     }
 
-    fn compile_item(&mut self, item: Item) -> sexpr::Expr {
+    fn compile_item(&mut self, item: &Item) -> sexpr::Expr {
         match item {
-            Item::ItemFn(item_fn) => self.compile_item_fn(item_fn),
-            Item::ItemImport(item_import) => self.compile_item_import(item_import),
+            Item::ItemFn(item_fn) => self.compile_item_fn(&item_fn),
+            Item::ItemImport(item_import) => self.compile_item_import(&item_import),
         }
     }
 
-    fn compile_item_import(&mut self, import_fn: ItemImport) -> sexpr::Expr {
+    fn compile_item_import(&mut self, import_fn: &ItemImport) -> sexpr::Expr {
         let mut imports = vec![];
 
-        for item in import_fn.items {
+        for item in &import_fn.items {
             let mut import = vec![];
 
             import.push(s_symbol!("import"));
             import.push(self.compile_ident_string(&import_fn.mod_name));
 
-            match item.kind {
+            match &item.kind {
                 ImportItemKind::Fn(ImportItemFn {
                     name,
                     params,
                     ret_ty,
                 }) => {
                     let mut param_types = vec![];
-                    for param in &params {
+                    for param in params {
                         param_types.push(param.ty.clone())
                     }
                     self.scope.add(
@@ -115,7 +151,7 @@ impl Compiler {
         s_expand!(imports)
     }
 
-    fn compile_item_fn(&mut self, item_fn: ItemFn) -> sexpr::Expr {
+    fn compile_item_fn(&mut self, item_fn: &ItemFn) -> sexpr::Expr {
         let mut param_types = vec![];
         for param in &item_fn.params {
             param_types.push(param.ty.clone())
@@ -144,13 +180,13 @@ impl Compiler {
             ));
         }
 
-        for param in item_fn.params {
+        for param in &item_fn.params {
             items.push(s_list!(vec![
                 s_symbol!("param"),
                 self.compile_ident(&param.name),
                 self.compile_ty(&param.ty),
             ]));
-            self.scope.add(param.name.ident, param.ty)
+            self.scope.add(param.name.ident.clone(), param.ty.clone())
         }
 
         for local in self.compile_let_decl_in_block(&item_fn.body) {
@@ -165,7 +201,7 @@ impl Compiler {
             items.push(stmt);
         }
 
-        if let Some(last_expr) = item_fn.body.last_expr {
+        if let Some(last_expr) = &item_fn.body.last_expr {
             self.last_ret_ty = self.get_type_expr(&last_expr);
 
             items.push(self.compile_expr(&last_expr));
@@ -289,7 +325,8 @@ impl Compiler {
             Expr::ExprUnary(expr_unary) => self.compile_expr_unary(expr_unary),
             Expr::ExprCall(expr_call) => self.compile_expr_call(expr_call),
             Expr::ExprAs(expr_as) => self.compile_expr_as(expr_as),
-            _ => panic!("unimplemented"),
+            Expr::ExprIf(expr_if) => self.compile_expr_if(expr_if),
+            _ => panic!("unimplemented expression compiler for `{:?}`", expr),
         }
     }
 
@@ -557,6 +594,42 @@ impl Compiler {
         }
     }
 
+    fn compile_expr_if(&mut self, expr_if: &ExprIf) -> sexpr::Expr {
+        let mut expand_items = vec![];
+        expand_items.push(self.compile_expr(&expr_if.cond));
+
+        let mut if_items = vec![];
+        if_items.push(s_symbol!("if"));
+
+        let mut then_items = vec![s_symbol!("then")];
+        for stmt in self.compile_expr_block(&expr_if.then_branch) {
+            then_items.push(stmt);
+        }
+        if_items.push(s_list!(then_items));
+
+        if let Some(else_branch) = &expr_if.else_branch {
+            let mut else_items = vec![s_symbol!("else")];
+
+            match else_branch.as_ref() {
+                Expr::ExprBlock(else_block) => {
+                    for stmt in self.compile_expr_block(&else_block) {
+                        else_items.push(stmt);
+                    }
+                }
+                Expr::ExprIf(expr_if) => {
+                    else_items.push(self.compile_expr_if(&expr_if));
+                }
+                _ => panic!("else branch should be a block_expr or if_expr node"),
+            }
+
+            if_items.push(s_list!(else_items));
+        };
+
+        expand_items.push(s_list!(if_items));
+
+        s_expand!(expand_items)
+    }
+
     fn compile_ty(&mut self, ty: &Ty) -> sexpr::Expr {
         match ty {
             Ty::TyInt64 => s_symbol!("i64"),
@@ -583,7 +656,9 @@ impl Compiler {
             Expr::ExprUnary(expr_unary) => self.get_type_expr_unary(expr_unary),
             Expr::ExprCall(expr_call) => self.get_type_expr_call(expr_call),
             Expr::ExprAs(expr_as) => self.get_type_expr_as(expr_as),
-            _ => panic!("unimplemented"),
+            Expr::ExprBlock(expr_block) => self.get_type_expr_block(expr_block),
+            Expr::ExprIf(expr_if) => self.get_type_expr_if(expr_if),
+            _ => panic!("unimplemented type getter for `{:?}`", expr),
         }
     }
 
@@ -658,6 +733,18 @@ impl Compiler {
 
     fn get_type_expr_as(&self, expr_as: &ExprAs) -> Ty {
         expr_as.ty.clone()
+    }
+
+    fn get_type_expr_block(&self, expr_block: &ExprBlock) -> Ty {
+        if let Some(last_expr) = &expr_block.last_expr {
+            self.get_type_expr(&last_expr)
+        } else {
+            Ty::Void
+        }
+    }
+
+    fn get_type_expr_if(&self, expr_if: &ExprIf) -> Ty {
+        self.get_type_expr(&Expr::ExprBlock(expr_if.then_branch.clone()))
     }
 }
 
