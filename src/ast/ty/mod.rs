@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Ty {
     TyInt32,
@@ -10,4 +12,31 @@ pub enum Ty {
         ret: Option<Box<Ty>>,
     },
     Void,
+}
+
+impl fmt::Display for Ty {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", ty_string(&self))
+    }
+}
+
+pub fn ty_string(ty: &Ty) -> String {
+    match &ty {
+        Ty::TyInt64 => "i64".to_string(),
+        Ty::TyInt32 => "i32".to_string(),
+        Ty::TyFloat64 => "f64".to_string(),
+        Ty::TyFloat32 => "f32".to_string(),
+        Ty::TyBool => "bool".to_string(),
+        Ty::Void => "void".to_string(),
+        Ty::Fn { params, ret } => {
+            format!(
+                "({}): {}",
+                params.iter().map(ty_string).collect::<Vec<_>>().join(", "),
+                match ret {
+                    Some(ty) => ty_string(ty),
+                    None => ty_string(&Ty::Void),
+                }
+            )
+        }
+    }
 }
