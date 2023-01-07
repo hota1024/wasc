@@ -5,6 +5,7 @@ pub mod parser;
 pub mod sexpr;
 pub mod span;
 pub mod tokens;
+pub mod wasm;
 
 use compiler::Compiler;
 use lexer::{lex, remove_whitespace_tokens};
