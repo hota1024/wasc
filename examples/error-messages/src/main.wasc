@@ -4,10 +4,6 @@ import js {
 
 export fn _start() {
   if true {
-    print(1);
-  } else if false {
-    print(2);
-  } else {
-    print(3);
+    10
   };
 }

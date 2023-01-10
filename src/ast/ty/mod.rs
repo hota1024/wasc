@@ -1,5 +1,7 @@
 use std::fmt;
 
+use crate::wasm::WasmTy;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Ty {
     TyInt32,
@@ -17,6 +19,18 @@ pub enum Ty {
 impl fmt::Display for Ty {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", ty_string(&self))
+    }
+}
+
+impl Ty {
+    pub fn to_wasm_ty(&self) -> WasmTy {
+        match self {
+            Self::TyInt32 => WasmTy::Int32,
+            Self::TyInt64 => WasmTy::Int64,
+            Self::TyFloat32 => WasmTy::Float32,
+            Self::TyFloat64 => WasmTy::Float64,
+            _ => panic!("`{}` cannot convert to wasm type", self),
+        }
     }
 }
 

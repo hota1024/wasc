@@ -19,17 +19,60 @@ use crate::{
         lit::{lit_ident::LitIdent, Lit},
         module::Module,
         stmt::{stmt_let::StmtLet, stmt_return::StmtReturn, stmt_semi::StmtSemi, Stmt},
-        ty::Ty,
+        ty::{ty_string, Ty},
     },
     sexpr::{self, s_expand, s_list, s_string, s_symbol},
+    wasm::WasmTy,
 };
 
 use self::scope::Scope;
+
+struct LastExprGlobal {
+    global_prefix: &'static str,
+    ty: Option<Ty>,
+}
+
+impl LastExprGlobal {
+    pub fn new(global_prefix: &'static str) -> Self {
+        LastExprGlobal {
+            global_prefix,
+            ty: None,
+        }
+    }
+
+    pub fn declare(&self, ty: &WasmTy, init: sexpr::Expr) -> sexpr::Expr {
+        s_list!(
+            s_symbol!("global"),
+            self.to_name_symbol_as(ty),
+            s_list!(s_symbol!("mut"), s_symbol!(ty)),
+            init
+        )
+    }
+
+    pub fn to_name_symbol_as(&self, ty: &WasmTy) -> sexpr::Expr {
+        s_symbol!(format!("${}{}", self.global_prefix, ty))
+    }
+
+    pub fn acquire(&mut self, ty: Ty) {
+        if let Some(ty) = &self.ty {
+            panic!("this global is already acquired")
+        }
+
+        self.ty = Some(ty);
+    }
+
+    pub fn free(&mut self) {
+        if self.ty.is_none() {
+            panic!("this global is not acquired")
+        }
+    }
+}
 
 pub struct Compiler {
     scope: Scope,
     last_ret_ty: Ty,
     expect_lit_ty: Option<Ty>,
+    last_expr_global: LastExprGlobal,
 }
 
 impl Compiler {
@@ -38,11 +81,8 @@ impl Compiler {
             scope: Scope::new(),
             last_ret_ty: Ty::Void,
             expect_lit_ty: None,
+            last_expr_global: LastExprGlobal::new("__wasm_block_"),
         }
-    }
-
-    fn get_global_if_result(&mut self, ty: &Ty) -> String {
-        format!("$__wasc_global_if_result_{}", ty_string(&ty))
     }
 
     pub fn compile_module(&mut self, module: Module) -> sexpr::Expr {
@@ -55,29 +95,21 @@ impl Compiler {
             if let Some(last_item) = last_item {
                 if let Item::ItemImport(_) = last_item {
                     // add global_if_result
-                    items.push(s_list!(
-                        s_symbol!("global"),
-                        s_symbol!(self.get_global_if_result(&Ty::TyInt32)),
-                        s_list!(s_symbol!("mut"), s_symbol!("i32")),
-                        s_list!(s_symbol!("i32.const"), s_symbol!("0"))
+                    items.push(self.last_expr_global.declare(
+                        &WasmTy::Int32,
+                        s_list!(s_symbol!("i32.const"), s_symbol!("0")),
                     ));
-                    items.push(s_list!(
-                        s_symbol!("global"),
-                        s_symbol!(self.get_global_if_result(&Ty::TyInt64)),
-                        s_list!(s_symbol!("mut"), s_symbol!("i64")),
-                        s_list!(s_symbol!("i64.const"), s_symbol!("0"))
+                    items.push(self.last_expr_global.declare(
+                        &WasmTy::Int64,
+                        s_list!(s_symbol!("i64.const"), s_symbol!("0")),
                     ));
-                    items.push(s_list!(
-                        s_symbol!("global"),
-                        s_symbol!(self.get_global_if_result(&Ty::TyFloat32)),
-                        s_list!(s_symbol!("mut"), s_symbol!("f32")),
-                        s_list!(s_symbol!("f32.const"), s_symbol!("0"))
+                    items.push(self.last_expr_global.declare(
+                        &WasmTy::Float32,
+                        s_list!(s_symbol!("f32.const"), s_symbol!("0")),
                     ));
-                    items.push(s_list!(
-                        s_symbol!("global"),
-                        s_symbol!(self.get_global_if_result(&Ty::TyFloat64)),
-                        s_list!(s_symbol!("mut"), s_symbol!("f64")),
-                        s_list!(s_symbol!("f64.const"), s_symbol!("0"))
+                    items.push(self.last_expr_global.declare(
+                        &WasmTy::Float64,
+                        s_list!(s_symbol!("f64.const"), s_symbol!("0")),
                     ));
                 }
             }
@@ -607,6 +639,12 @@ impl Compiler {
         }
         if_items.push(s_list!(then_items));
 
+        // then-branch return
+        if let Some(last_expr) = &expr_if.then_branch.last_expr {
+            let last_expr_ty = self.get_type_expr(last_expr);
+            if last_expr_ty != Ty::Void {}
+        }
+
         if let Some(else_branch) = &expr_if.else_branch {
             let mut else_items = vec![s_symbol!("else")];
 
@@ -774,26 +812,5 @@ fn ty_instruction(ty: &Ty, instruction: &str) -> sexpr::Expr {
         Ty::TyFloat32 => s_symbol!(format!("f32.{}", instruction)),
         Ty::TyBool => s_symbol!(format!("i32.{}", instruction)),
         _ => panic!("unimplemented type instruction: `{}`", ty_string(&ty)),
-    }
-}
-
-fn ty_string(ty: &Ty) -> String {
-    match &ty {
-        Ty::TyInt64 => "i64".to_string(),
-        Ty::TyInt32 => "i32".to_string(),
-        Ty::TyFloat64 => "f64".to_string(),
-        Ty::TyFloat32 => "f32".to_string(),
-        Ty::TyBool => "bool".to_string(),
-        Ty::Void => "void".to_string(),
-        Ty::Fn { params, ret } => {
-            format!(
-                "({}): {}",
-                params.iter().map(ty_string).collect::<Vec<_>>().join(", "),
-                match ret {
-                    Some(ty) => ty_string(ty),
-                    None => ty_string(&Ty::Void),
-                }
-            )
-        }
     }
 }
