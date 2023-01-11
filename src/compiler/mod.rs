@@ -99,6 +99,8 @@ impl Compiler {
             if let Some(last_item) = last_item {
                 if let Item::ItemImport(_) = last_item {
                     // add global_if_result
+                    // TODO: impl if last expression value
+                    /*
                     items.push(self.last_expr_global.declare(
                         &WasmTy::Int32,
                         s_list!(s_symbol!("i32.const"), s_symbol!("0")),
@@ -115,6 +117,7 @@ impl Compiler {
                         &WasmTy::Float64,
                         s_list!(s_symbol!("f64.const"), s_symbol!("0")),
                     ));
+                    */
                 }
             }
 
@@ -632,10 +635,10 @@ impl Compiler {
 
     fn compile_expr_if(&mut self, expr_if: &ExprIf) -> sexpr::Expr {
         let mut expand_items = vec![];
-        expand_items.push(self.compile_expr(&expr_if.cond));
 
         let mut if_items = vec![];
         if_items.push(s_symbol!("if"));
+        if_items.push(self.compile_expr(&expr_if.cond));
 
         let mut then_items = vec![s_symbol!("then")];
         for stmt in self.compile_expr_block(&expr_if.then_branch) {
@@ -646,12 +649,13 @@ impl Compiler {
         // then-branch return
         if let Some(last_expr) = &expr_if.then_branch.last_expr {
             let last_expr_ty = self.get_type_expr(&last_expr);
-            let compiled_expr = self.compile_expr(&last_expr);
+            //let compiled_expr = self.compile_expr(&last_expr);
             if last_expr_ty != Ty::Void {
-                if_items.push(
-                    self.last_expr_global
-                        .assign(&last_expr_ty.to_wasm_ty(), compiled_expr),
-                );
+                panic!("if-expr last expression is not supported");
+                //if_items.push(
+                //   self.last_expr_global
+                //      .assign(&last_expr_ty.to_wasm_ty(), compiled_expr),
+                //);
             }
         }
 
