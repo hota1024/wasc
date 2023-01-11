@@ -53,6 +53,10 @@ impl LastExprGlobal {
         s_symbol!(format!("${}{}", self.global_prefix, ty))
     }
 
+    pub fn assign(&mut self, ty: &WasmTy, expr: sexpr::Expr) -> sexpr::Expr {
+        s_list![s_symbol!("global.set"), self.to_name_symbol_as(ty), expr]
+    }
+
     pub fn acquire(&mut self, ty: Ty) {
         if let Some(ty) = &self.ty {
             panic!("this global is already acquired")
@@ -641,8 +645,14 @@ impl Compiler {
 
         // then-branch return
         if let Some(last_expr) = &expr_if.then_branch.last_expr {
-            let last_expr_ty = self.get_type_expr(last_expr);
-            if last_expr_ty != Ty::Void {}
+            let last_expr_ty = self.get_type_expr(&last_expr);
+            let compiled_expr = self.compile_expr(&last_expr);
+            if last_expr_ty != Ty::Void {
+                if_items.push(
+                    self.last_expr_global
+                        .assign(&last_expr_ty.to_wasm_ty(), compiled_expr),
+                );
+            }
         }
 
         if let Some(else_branch) = &expr_if.else_branch {
