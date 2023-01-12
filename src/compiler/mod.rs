@@ -9,6 +9,7 @@ use crate::{
             expr_call::ExprCall,
             expr_if::ExprIf,
             expr_unary::{ExprUnary, UnaryOp},
+            expr_while::ExprWhile,
             Expr,
         },
         item::{
@@ -77,6 +78,7 @@ pub struct Compiler {
     last_ret_ty: Ty,
     expect_lit_ty: Option<Ty>,
     last_expr_global: LastExprGlobal,
+    id: i64,
 }
 
 impl Compiler {
@@ -86,6 +88,7 @@ impl Compiler {
             last_ret_ty: Ty::Void,
             expect_lit_ty: None,
             last_expr_global: LastExprGlobal::new("__wasm_block_"),
+            id: 0,
         }
     }
 
@@ -365,6 +368,7 @@ impl Compiler {
             Expr::ExprCall(expr_call) => self.compile_expr_call(expr_call),
             Expr::ExprAs(expr_as) => self.compile_expr_as(expr_as),
             Expr::ExprIf(expr_if) => self.compile_expr_if(expr_if),
+            Expr::ExprWhile(expr_while) => self.compile_expr_while(expr_while),
             _ => panic!("unimplemented expression compiler for `{:?}`", expr),
         }
     }
@@ -682,6 +686,37 @@ impl Compiler {
         s_expand!(expand_items)
     }
 
+    fn compile_expr_while(&mut self, expr_while: &ExprWhile) -> sexpr::Expr {
+        let continue_symbol = self.new_label_symbol();
+        let break_symbol = self.new_label_symbol();
+
+        if self.get_type_expr(&expr_while.cond) != Ty::TyBool {
+            panic!("if condition should be bool value");
+        }
+
+        let mut loop_items = vec![s_symbol!("loop")];
+        loop_items.push(continue_symbol.clone());
+
+        let mut block_items = vec![s_symbol!("block")];
+        block_items.push(break_symbol.clone());
+
+        block_items.push(s_list![
+            s_symbol!("i32.eqz"),
+            self.compile_expr(&expr_while.cond)
+        ]);
+        block_items.push(s_list![s_symbol!("br_if"), break_symbol.clone()]);
+
+        for stmt in self.compile_expr_block(&expr_while.body) {
+            block_items.push(stmt);
+        }
+
+        block_items.push(s_list![s_symbol!("br"), continue_symbol.clone()]);
+
+        loop_items.push(s_list!(block_items));
+
+        s_list!(loop_items)
+    }
+
     fn compile_ty(&mut self, ty: &Ty) -> sexpr::Expr {
         match ty {
             Ty::TyInt64 => s_symbol!("i64"),
@@ -710,6 +745,7 @@ impl Compiler {
             Expr::ExprAs(expr_as) => self.get_type_expr_as(expr_as),
             Expr::ExprBlock(expr_block) => self.get_type_expr_block(expr_block),
             Expr::ExprIf(expr_if) => self.get_type_expr_if(expr_if),
+            Expr::ExprWhile(expr_while) => self.get_type_expr_while(expr_while),
             _ => panic!("unimplemented type getter for `{:?}`", expr),
         }
     }
@@ -797,6 +833,16 @@ impl Compiler {
 
     fn get_type_expr_if(&self, expr_if: &ExprIf) -> Ty {
         self.get_type_expr(&Expr::ExprBlock(expr_if.then_branch.clone()))
+    }
+
+    fn get_type_expr_while(&self, expr_while: &ExprWhile) -> Ty {
+        self.get_type_expr(&Expr::ExprBlock(expr_while.body.clone()))
+    }
+
+    fn new_label_symbol(&mut self) -> sexpr::Expr {
+        let symbol = s_symbol!(format!("$wl{}", self.id).to_string());
+        self.id += 1;
+        symbol
     }
 }
 

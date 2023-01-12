@@ -1,5 +1,5 @@
 use crate::{
-    ast::expr::{expr_if::ExprIf, Expr},
+    ast::expr::{expr_if::ExprIf, expr_while::ExprWhile, Expr},
     parser::{parser_result::ParseResult, token_walker::TokenWalker},
     tokens::TokenKind,
 };
@@ -13,6 +13,7 @@ use super::{
 pub fn parse_expr_controls(walker: &mut TokenWalker) -> ParseResult<Expr> {
     match walker.peek().kind {
         TokenKind::KeywordIf => parse_expr_if(walker),
+        TokenKind::KeywordWhile => parse_expr_while(walker),
         _ => parse_expr_atom(walker),
     }
 }
@@ -40,5 +41,17 @@ fn parse_expr_if(walker: &mut TokenWalker) -> ParseResult<Expr> {
         cond: Box::new(cond),
         then_branch,
         else_branch,
+    }))
+}
+
+fn parse_expr_while(walker: &mut TokenWalker) -> ParseResult<Expr> {
+    walker.expect_next_token(TokenKind::KeywordWhile)?;
+
+    let cond = parse_expr(walker)?;
+    let body = parse_block(walker)?;
+
+    Ok(Expr::ExprWhile(ExprWhile {
+        cond: Box::new(cond),
+        body,
     }))
 }

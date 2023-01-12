@@ -6,6 +6,7 @@ pub mod expr_block;
 pub mod expr_call;
 pub mod expr_if;
 pub mod expr_unary;
+pub mod expr_while;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
@@ -15,5 +16,6 @@ pub enum Expr {
     ExprCall(expr_call::ExprCall),
     ExprAs(expr_as::ExprAs),
     ExprIf(expr_if::ExprIf),
+    ExprWhile(expr_while::ExprWhile),
     Lit(Lit),
 }

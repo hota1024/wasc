@@ -51,6 +51,7 @@ pub enum TokenKind {
     KeywordAs,     // as
     KeywordIf,     // if
     KeywordElse,   // else
+    KeywordWhile,  // while
     KeywordReturn, // return
     KeywordExport, // export
     KeywordImport, // import

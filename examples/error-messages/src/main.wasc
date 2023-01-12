@@ -3,11 +3,10 @@ import js {
 }
 
 export fn _start() {
-  if true {
-    print(10);
-  } else if true {
-    print(20);
-  } else {
-    print(20);
+  let i: i32 = 0;
+  while i < 10 {
+    print(i);
+    i += 1;
   };
+  print(9999);
 }

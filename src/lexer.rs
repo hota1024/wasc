@@ -222,6 +222,7 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
                 "as" => kind = TokenKind::KeywordAs,
                 "if" => kind = TokenKind::KeywordIf,
                 "else" => kind = TokenKind::KeywordElse,
+                "while" => kind = TokenKind::KeywordWhile,
                 "return" => kind = TokenKind::KeywordReturn,
                 "export" => kind = TokenKind::KeywordExport,
                 "import" => kind = TokenKind::KeywordImport,
