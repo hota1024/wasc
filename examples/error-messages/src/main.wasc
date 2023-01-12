@@ -2,11 +2,13 @@ import js {
   fn print(i32);
 }
 
-export fn _start() {
-  let i: i32 = 0;
-  while i < 10 {
-    print(i);
-    i += 1;
+fn fib(n: i32): i32 {
+  if n <= 1 {
+    return n;
   };
-  print(9999);
+  return fib(n - 1) + fib(n - 2);
+}
+
+export fn _start() {
+  print(fib(10));
 }

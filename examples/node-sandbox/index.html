@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+  </head>
+  <body>
+    <script>
+    const fib = n => {
+      if (n <= 1) {
+        return n;
+      }
+      return fib(n - 1) + fib(n - 2);
+    }
+
+    window.addEventListener('load', () => {
+      WebAssembly.instantiateStreaming(fetch('./main.wasm'), {
+        imports: {
+        }
+      }).then(mod => {
+        console.log(mod)
+      });
+    });
+    </script>
+  </body>
+</html>
+

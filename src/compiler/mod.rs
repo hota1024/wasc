@@ -258,7 +258,7 @@ impl Compiler {
             }
         } else {
             if !matches!(&self.last_ret_ty, Ty::Void) {
-                panic!("function must not return");
+                //panic!("function must not return");
             }
         }
 
@@ -807,15 +807,17 @@ impl Compiler {
 
     fn get_type_expr_call(&self, expr_call: &ExprCall) -> Ty {
         let name = &expr_call.fn_name.ident;
-        let entity = self.scope.get(name.to_string()).unwrap();
-
-        if let Ty::Fn { ret, .. } = &entity.ty {
-            match &ret {
-                Some(ty) => *ty.clone(),
-                None => Ty::Void,
+        if let Some(entity) = self.scope.get(name.to_string()) {
+            if let Ty::Fn { ret, .. } = &entity.ty {
+                match &ret {
+                    Some(ty) => *ty.clone(),
+                    None => Ty::Void,
+                }
+            } else {
+                panic!("{} is not a function", name);
             }
         } else {
-            panic!("{} is not a function", name);
+            panic!("undefined function `{}`", name);
         }
     }
 

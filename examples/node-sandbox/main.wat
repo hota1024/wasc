@@ -1,22 +1,55 @@
 (module
+  (import
+    "js"
+    "print"
+    (func
+      $print
+      (param i32)
+    )
+  )
   (func
-    $add
-    (param $a i32)
-    (param $b i32)
-    (drop
+    $fib
+    (param $n i32)
+    (result i32)
+    (if
+      (i32.le_s
+        (local.get $n)
+        (i32.const 1)
+      )
+      (then
+        (return
+          (local.get $n)
+        )
+      )
+    )
+    (return
       (i32.add
-        (local.get $a)
-        (local.get $b)
+        (call
+          $fib
+          (i32.sub
+            (local.get $n)
+            (i32.const 1)
+          )
+        )
+        (call
+          $fib
+          (i32.sub
+            (local.get $n)
+            (i32.const 2)
+          )
+        )
       )
     )
   )
   (func
-    $main
-    (export "main")
+    $_start
+    (export "_start")
     (call
-      $add
-      (i32.const 10)
-      (i32.const 20)
+      $print
+      (call
+        $fib
+        (i32.const 10)
+      )
     )
   )
 )
