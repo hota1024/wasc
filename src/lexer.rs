@@ -124,6 +124,14 @@ fn lex_item(input: &[u8], pos: usize) -> Option<(Token, usize)> {
             end += 1;
             kind = TokenKind::CloseBrace;
         }
+        b'[' => {
+            end += 1;
+            kind = TokenKind::OpenBracket;
+        }
+        b']' => {
+            end += 1;
+            kind = TokenKind::CloseBracket;
+        }
         b'!' => {
             end += 1;
             if match_char!(b'=') {

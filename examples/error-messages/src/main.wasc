@@ -10,5 +10,6 @@ fn fib(n: i32): i32 {
 }
 
 export fn _start() {
+  let array = [0, 1, 2];
   print(fib(10));
 }

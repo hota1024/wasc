@@ -29,10 +29,12 @@ pub enum TokenKind {
     AndAnd, // &&
     BarBar, // ||
 
-    OpenParen,  // (
-    CloseParen, // )
-    OpenBrace,  // {
-    CloseBrace, // }
+    OpenParen,    // (
+    CloseParen,   // )
+    OpenBrace,    // {
+    CloseBrace,   // }
+    OpenBracket,  // [
+    CloseBracket, // ]
 
     UnsignedInt(u64),
     UnsignedFloat(f64),
