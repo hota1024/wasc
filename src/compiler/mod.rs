@@ -28,6 +28,7 @@ use crate::{
 
 use self::scope::Scope;
 
+/*
 struct LastExprGlobal {
     global_prefix: &'static str,
     ty: Option<Ty>,
@@ -72,12 +73,13 @@ impl LastExprGlobal {
         }
     }
 }
+*/
 
 pub struct Compiler {
     scope: Scope,
     last_ret_ty: Ty,
     expect_lit_ty: Option<Ty>,
-    last_expr_global: LastExprGlobal,
+    // last_expr_global: LastExprGlobal,
     id: i64,
 }
 
@@ -87,7 +89,7 @@ impl Compiler {
             scope: Scope::new(),
             last_ret_ty: Ty::Void,
             expect_lit_ty: None,
-            last_expr_global: LastExprGlobal::new("__wasm_block_"),
+            // last_expr_global: LastExprGlobal::new("__wasm_block_"),
             id: 0,
         }
     }

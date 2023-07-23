@@ -5,7 +5,6 @@ export fn main(n: i64): i64 {
     sum += i;
     i += 1 as i64;
   };
-  
+
   sum
 }
-
