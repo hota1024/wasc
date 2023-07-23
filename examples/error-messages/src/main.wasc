@@ -1,14 +1,11 @@
-import js {
-  fn print(i32);
-}
-
-fn fib(n: i32): i32 {
-  if n <= 1 {
-    return n;
+export fn main(n: i64): i64 {
+  let sum = 0 as i64;
+  let i = 0 as i64;
+  while i < n {
+    sum += i;
+    i += 1 as i64;
   };
-  return fib(n - 1) + fib(n - 2);
+  
+  sum
 }
 
-export fn _start() {
-  print(fib(10));
-}

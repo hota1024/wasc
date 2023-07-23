@@ -231,12 +231,12 @@ impl Compiler {
             self.scope.add(param.name.ident.clone(), param.ty.clone())
         }
 
-        for local in self.compile_let_decl_in_block(&item_fn.body) {
-            items.push(local);
-        }
-
         if let Some(ty) = &item_fn.ret_ty {
             items.push(s_list!(vec![s_symbol!("result"), self.compile_ty(&ty),]));
+        }
+
+        for local in self.compile_let_decl_in_block(&item_fn.body) {
+            items.push(local);
         }
 
         for stmt in self.compile_expr_block(&item_fn.body) {

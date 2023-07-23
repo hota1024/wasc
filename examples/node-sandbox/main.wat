@@ -1,55 +1,53 @@
 (module
-  (import
-    "js"
-    "print"
-    (func
-      $print
-      (param i32)
-    )
-  )
   (func
-    $fib
-    (param $n i32)
-    (result i32)
-    (if
-      (i32.le_s
-        (local.get $n)
-        (i32.const 1)
-      )
-      (then
-        (return
-          (local.get $n)
-        )
+    $main
+    (export "main")
+    (param $n i64)
+    (result i64)
+    (local $sum i64)
+    (local $i i64)
+    (local.set
+      $sum
+      (i64.extend_i32_s
+        (i32.const 0)
       )
     )
-    (return
-      (i32.add
-        (call
-          $fib
-          (i32.sub
+    (local.set
+      $i
+      (i64.extend_i32_s
+        (i32.const 0)
+      )
+    )
+    (loop
+      $wl0
+      (block
+        $wl1
+        (i32.eqz
+          (i64.lt_s
+            (local.get $i)
             (local.get $n)
-            (i32.const 1)
           )
         )
-        (call
-          $fib
-          (i32.sub
-            (local.get $n)
-            (i32.const 2)
+        (br_if $wl1)
+        (local.set
+          $sum
+          (i64.add
+            (local.get $sum)
+            (local.get $i)
           )
         )
+        (local.set
+          $i
+          (i64.add
+            (local.get $i)
+            (i64.extend_i32_s
+              (i32.const 1)
+            )
+          )
+        )
+        (br $wl0)
       )
     )
-  )
-  (func
-    $_start
-    (export "_start")
-    (call
-      $print
-      (call
-        $fib
-        (i32.const 10)
-      )
-    )
+    (local.get $sum)
   )
 )
